@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-widthm initial-scale=1">
+<meta name="description" content="Dashboard">
+<link rel="stylesheet" href="{{ url_for('static', filename= 'css/style.css') }}">
+
+<head>
+    <title>Tile Shipping Express</title>
+</head>
+
+<body>
+    <div class="h1">Tile Shipping Express</div>
+    <div class="h2">
+        Welcome, {{ name }}
+    </div> <!--Change name as variable set by login page.-->
+    <!--Selection Screen-->
+    <div class="body1">
+        <label for="action">Select a Service:</label>
+        <select name="action" id="action">
+            <option value="transfer">Transfer</option>
+            <option value="balance">Balance</option>
+        </select>
+    </div>
+
+    <div class="body2">
+        <a href="{{ url_for('Login') }}">
+            <button type="button">Log Out</button>
+        </a>
+    </div>
+
+    <div class="body3">
+        <button type="button">Continue</button>
+    </div>
+
+</body>
+
+</html>

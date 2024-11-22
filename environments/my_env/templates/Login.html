@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-widthm initial-scale=1">
+    <meta name="description" content="Login">
+    <link rel="stylesheet" href="style.css">
+    
+    <title>TSE: Login</title>
+    
+    <body>
+        <div class = body2>
+            <form action="{{ url_for('Dashboard') }}" method = "post">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="user" placeholder="user">
+            <button type="submit">Login</button>
+        </div>
+    </body>
+</html>
