@@ -16,21 +16,20 @@
     </div> <!--Change name as variable set by login page.-->
     <!--Selection Screen-->
     <div class="body1">
-        <label for="action">Select a Service:</label>
-        <select name="action" id="action">
-            <option value="transfer">Transfer</option>
-            <option value="balance">Balance</option>
-        </select>
+        <form action="{{ url_for('checkAction') }}" method="post">
+            <label for="action">Select a Service:</label>
+            <select name="TypeAction" id="TypeAction">
+                <option value="Transfer">Transfer</option>
+                <option value="Balance">Balance</option>
+            </select>
+            <button type="submit"> Continue </button>
+        </form>
     </div>
 
     <div class="body2">
         <a href="{{ url_for('Login') }}">
             <button type="button">Log Out</button>
         </a>
-    </div>
-
-    <div class="body3">
-        <button type="button">Continue</button>
     </div>
 
 </body>
