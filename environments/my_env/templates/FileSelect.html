@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Manifest</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">λ</div>
+            <div class="toolbar">
+                <span class="tool tool1"></span>
+                <span class="tool tool2"></span>
+                <span class="tool tool3"></span>
+            </div>
+        </header>
+        <main class="content">
+            <h1 class="title">Upload Manifest</h1>
+            <form action="{{ url_for('fileUpload') }}" method="POST" enctype="multipart/form-data">
+                <input type = "file" name = "file" />
+                <button class="submit">Upload</button>
+            </form>
+            <h2 class>You chose: {{ select }}</h2>
+        </main>
+    </div>
+</body>
+
+</html>
