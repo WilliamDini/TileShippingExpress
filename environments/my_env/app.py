@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for
 import sys
+from grid import *
 
 app = Flask(__name__)
 
@@ -25,6 +26,9 @@ def Balance():
     return render_template('Balance.html')
 
 @app.route('/Transfer', methods = ["GET", "POST"])
+def createGrid():
+    return
+
 def Transfer():
     return render_template('Transfer.html')
 
