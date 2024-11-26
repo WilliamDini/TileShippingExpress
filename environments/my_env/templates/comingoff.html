@@ -1,16 +1,42 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <body>
-            <title>Tile Shipping Express</title>
-                <h1 style="text-align: center;">Coming Off</h1>
-                <p style="text-align: center;">How many containers do you want to coming off?</p>
-                <div
-                    style="text-align: center;"><input type = "input">
-                    <a href="comingon.html">
-                        <button type="button">Enter</button>
-                    </a>
-                </div>
-        </body>
-    </head>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>containers</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <title>Tile Shipping Express</title>
+    <h1 style="text-align: center;">Coming Off</h1>
+    <p style="text-align: center;">Which containers do you want to coming off?</p>
+    <div style="text-align: center;"><input type="input">
+        <a href="comingon.html">
+            <button type="button">Enter</button>
+        </a>
+    </div>
+    <div class="grid-container">
+        {% for container in ship %}
+        <div id="containerGridElement" onclick ="changeBackgroundColor()">
+            <p>{{ container.name }}</p>
+            {% if container.name != "NAN" %}
+            {%if container.name != "UNUSED"%}
+            <p>Weight: </p>
+            <p>{{ container.weight }}</p>
+            {% endif %}
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        function changeBackgroundColor() {
+            document.getElementById("containerGridElement").style.background = "green";
+        }
+    </script>
+
+</body>
+
 </html>

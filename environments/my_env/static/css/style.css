@@ -44,3 +44,28 @@
     margin-top: -100px;
     width: 100%;
 }
+
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(12, 100px);
+    grid-template-rows: repeat(8, 100px);
+    gap: 1px;
+    padding: 15px;
+    align-content: center;
+}
+
+.grid-container > div {
+    background-color: rgba(255, 255, 255, 0.8);
+    border: 1px solid black;
+    text-align: center;
+    font-size: 15px;
+    align-content: center;
+}
+
+.grid-container > div:hover {
+    background-color: rgba(145, 206, 241, 0.8);
+    border: 1px solid black;
+    text-align: center;
+    font-size: 15px;
+    align-content: center;
+}

@@ -6,6 +6,9 @@ app = Flask(__name__)
 
 class DataStore():
     selectOption = "not set"
+    ship = Ship()
+    fileName = "not set"
+
 
 @app.route('/', methods = ["GET", "POST"])
 def Login():
@@ -32,6 +35,11 @@ def createGrid():
 def Transfer():
     return render_template('Transfer.html')
 
+@app.route('/comingoff', methods = ["GET", "POST"])
+def comingoff():
+    DataStore.ship.printContainers()
+    return render_template('comingoff.html', fileUploaded = DataStore.fileName, ship = DataStore.ship.containers)
+
 @app.route('/FileSelect', methods = ['GET', 'POST'])
 def checkAction():
     print("In check action", file = sys.stderr)
@@ -48,10 +56,14 @@ def fileUpload():
     if request.method == "POST":
         print(DataStore.selectOption, file = sys.stderr)
         file = request.files['file']
+        DataStore.fileName = file.filename
+        print(DataStore.fileName, file = sys.stderr)
         file.save(file.filename)
+        DataStore.ship.loadGrid(DataStore.fileName)
         if(DataStore.selectOption == "Balance"):
-            return render_template('Balance.html', fileUploaded = file.filename)
+            return render_template('Balance.html', fileUploaded = file.filename, ship = DataStore.ship.containers)
         elif(DataStore.selectOption == "Transfer"):
-            return render_template('Transfer.html', fileUploaded = file.filename)
+            print("in transfer conditional", file = sys.stderr)
+            return redirect(url_for('comingoff'))
     return redirect(url_for('Error'))
 
