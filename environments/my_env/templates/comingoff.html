@@ -1,16 +1,53 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <body>
-            <title>Tile Shipping Express</title>
-                <h1 style="text-align: center;">Coming Off</h1>
-                <p style="text-align: center;">How many containers do you want to coming off?</p>
-                <div
-                    style="text-align: center;"><input type = "input">
-                    <a href="comingon.html">
-                        <button type="button">Enter</button>
-                    </a>
-                </div>
-        </body>
-    </head>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TSE: Transfer-ComingOff</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <title>Tile Shipping Express</title>
+    <h1 style="text-align: center;">Coming Off</h1>
+    <p style="text-align: center;">Which containers do you want to coming off?</p>
+    <div class="grid-container">
+        {% for container in ship %}
+        <div id="{{ container.id }}_{{ container.name }}" onclick=changeBackgroundColor(id)>
+            {% if container.name != "NAN" %}
+            <script>
+                document.getElementById("{{ container.id }}_{{ container.name }}").style.background = "white";
+            </script>
+            {%if container.name != "UNUSED"%}
+            <p>{{ container.name }}</p>
+            <p>Weight: </p>
+            <p>{{ container.weight }}</p>
+            {% endif %}
+            {% else %}
+            <script>
+                document.getElementById("{{ container.id }}_{{ container.name }}").style.background = "black";
+            </script>
+            {% endif %}
+        </div>
+
+        {% endfor %}
+    </div>
+
+    <div style="text-align: center;">
+        <button type="button" onclick=changeShipArray()>Submit Changes</button>
+    </div>
+
+    <div style="text-align: right;">
+        <a href="/Transfer-comingon">
+            <button type="button">Continue</button>
+        </a>
+    </div>
+
+    <div class = "selectedIDs" id = "arrayContainer"></div>
+
+    <script type="text/javascript" src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+
+</body>
+
 </html>
