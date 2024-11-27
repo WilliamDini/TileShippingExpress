@@ -1,16 +1,55 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <body>
-            <title>Tile Shipping Express</title>
-                <h1 style="text-align: center;">Coming On</h1>
-                <p style="text-align: center;">How many containers do you want coming on?</p>
-                <div
-                    style="text-align: center;"><input type = "input">
-                    <a href="destination.html">
-                        <button type="button">Enter</button>
-                    </a>
-                </div>
-        </body>
-    </head>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TSE: Transfer-ComingOff</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <title>TSE: Transfer-ComingOn</title>
+    <h1 style="text-align: center;">Coming On</h1>
+    <p style="text-align: center;">What containers are coming on the ship?</p>
+    <label for="containerName">Container Name:</label>
+    <input type="text" id="containerName" placeholder="Enter container name.">
+    <label for="containerWeight">Container Weight:</label>
+    <input type="text" id="containerWeight" placeholder="Enter container weight.">
+    <button type="button" onclick=handleSubmittedContainer()>Submit</button>
+      
+    <div class="grid-container">
+        {% for container in ship %}
+        <div id="{{ container.id }}_{{ container.name }}">
+            {% if container.name != "NAN" %}
+            <script>
+                document.getElementById("{{ container.id }}_{{ container.name }}").style.background = "white";
+            </script>
+            {%if container.name != "UNUSED"%}
+            <p>{{ container.name }}</p>
+            <p>Weight: </p>
+            <p>{{ container.weight }}</p>
+            {% endif %}
+            {% else %}
+            <script>
+                document.getElementById("{{ container.id }}_{{ container.name }}").style.background = "black";
+            </script>
+            {% endif %}
+        </div>
+
+        {% endfor %}
+    </div>
+
+    <div></div>
+
+    <div style="text-align: right;">
+        <a href="/Transfer-comingon">
+            <button type="button">Continue</button>
+        </a>
+    </div>
+
+    <script type="text/javascript" src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+
+</body>
+
 </html>

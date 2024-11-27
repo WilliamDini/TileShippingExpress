@@ -3,11 +3,12 @@ import array
 import sys
 
 class Container():
-    def __init__(self, xPos, yPos, weight, name):
+    def __init__(self, xPos, yPos, weight, name, id):
         self.xPos = xPos
         self.yPos = yPos
         self.weight = weight
         self.name = name
+        self.id = id
 
 class Ship():
     def __init__(self):
@@ -18,6 +19,7 @@ class Ship():
         #print(fileName)
         with open(fileName, "r") as file:
             line = file.readline()
+            index = 0
             while line:
                 #split line by space into array in variable values
                 values = line.split(" ")
@@ -33,7 +35,8 @@ class Ship():
                 name = values[2]
                 
                 #add container(structs) to containers array in ship class
-                self.containers.insert(0, Container(x, y, weight, name))
+                self.containers.insert(0, Container(x, y, weight, name, index))
+                index = index + 1
                 line = file.readline()
 
     def printContainers(self):

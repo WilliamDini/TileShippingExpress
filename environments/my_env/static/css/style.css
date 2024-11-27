@@ -55,17 +55,26 @@
 }
 
 .grid-container > div {
-    background-color: rgba(255, 255, 255, 0.8);
+    background-color: white;
     border: 1px solid black;
     text-align: center;
+    align-items: center;
     font-size: 15px;
     align-content: center;
 }
 
 .grid-container > div:hover {
-    background-color: rgba(145, 206, 241, 0.8);
-    border: 1px solid black;
+    background: rgba(145, 206, 241, 0.8);
+    border: 5px solid rgb(79, 170, 255);
     text-align: center;
+    align-items: center;
     font-size: 15px;
     align-content: center;
+}
+
+.selectedIDs {
+    border: 5px solid black;
+    text-align: center;
+    padding: 3px;
+    position: absolute;
 }
