@@ -16,6 +16,7 @@ class Ship():
         self.containers = []
 
     def loadGrid(self, fileName):
+        self.containers.clear()
         #print(fileName)
         with open(fileName, "r") as file:
             line = file.readline()
