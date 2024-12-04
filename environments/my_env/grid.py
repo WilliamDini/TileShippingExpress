@@ -57,8 +57,8 @@ class Ship():
     def printContainers(self):
         if len(self.containers) > 0:
             for container in self.containers:
-                print("Container Info: XPOS:" + container.xPos 
-                                    + " YPOS:" + container.yPos 
+                print("Container Info: XPOS:" + str(container.xPos) 
+                                    + " YPOS:" + str(container.yPos) 
                                     + " Weight:" + container.weight
                                     + " Name:" + container.name, file=sys.stderr)
 
