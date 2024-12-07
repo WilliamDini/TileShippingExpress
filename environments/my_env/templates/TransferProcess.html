@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TSE: Transfer Process</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <h1 class="page-title">Transfer Process</h1>
+    <p class="operation-status">Operation {{ current_operation }} of {{ total_operations }}</p>
+    
+    <div class="grid-container">
+        {% for container in ship %}
+        <div id="{{ container.id }}_{{ container.name }}" 
+            class="grid-item {% if container.name == 'NAN' %}black{% elif container.name == 'UNUSED' %}unused{% else %}active{% endif %}">
+            {% if container.name != 'UNUSED' and container.name != 'NAN' %}
+                <p class="container-name">{{ container.name }}</p>
+                <p class="container-weight">{{ container.weight }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="button-container">
+        <a href="{{ url_for('transfer_process', current=current_operation + 1) }}">
+            <button type="button" class="next-button">Next Operation</button>
+        </a>
+    </div>
+</body>
+
+</html>

@@ -11,7 +11,7 @@
 <body>
     <title>Tile Shipping Express</title>
     <h1 style="text-align: center;">Coming Off</h1>
-    <p style="text-align: center;">Which containers do you want to coming off?</p>
+    <p style="text-align: center;">Which containers do you want to to unload?</p>
     <div class="grid-container">
         {% for container in ship %}
         <div id="{{ container.id }}_{{ container.name }}" onclick=changeBackgroundColor(id)>
@@ -39,7 +39,7 @@
     </div>
 
     <div style="text-align: right;">
-        <a href="/Transfer-comingon">
+        <a href="/Transfer-loading">
             <button type="button">Continue</button>
         </a>
     </div>
