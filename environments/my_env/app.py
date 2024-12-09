@@ -43,7 +43,7 @@ def loading():
             print(f"User wants to load {num_containers} containers", file=sys.stderr)
             DataStore.num_containers_to_load = int(num_containers)
             
-            return redirect(url_for('transfer_process', current=1))  # Start at operation 1
+            return redirect(url_for('transfer_process', current=1))
         else:
             return render_template('loading.html', error="Please enter a valid number.")
     return render_template('loading.html')
@@ -82,30 +82,39 @@ def transferChanges():
 @app.route('/Transfer-process', methods=["GET", "POST"])
 def transfer_process():
     current_operation = request.args.get("current", 1, type=int)
-    num_containers_to_remove = len(DataStore.shipChanges)
+
+    num_containers_to_remove = len(DataStore.shipChanges)  
     num_containers_to_load = getattr(DataStore, 'num_containers_to_load', 0) 
     total_operations = num_containers_to_remove + num_containers_to_load
+
     ship_data = DataStore.ship.containers
 
     if request.method == "POST":
-        selected_id = request.form.get("selected_id", type=int)
-        for container in ship_data:
-            if container.id == selected_id:
-                container.name = request.form.get("name", container.name)
-                container.weight = request.form.get("weight", container.weight)
+        container_name = request.form.get('container_name')
+        container_weight = request.form.get('container_weight')
+        if not container_name or not container_weight:
+            return render_template(
+                'TransferProcess.html',
+                ship=ship_data,
+                current_operation=current_operation,
+                total_operations=total_operations,
+                error="Name and weight are required."
+            )
+        if current_operation <= len(ship_data):
+            ship_data[current_operation - 1].name = container_name
+            ship_data[current_operation - 1].weight = container_weight
 
-    selected_container = ship_data[current_operation - 1] if current_operation <= total_operations else None
-
-    if current_operation > total_operations:
-        return redirect(url_for('success'))
+        current_operation += 1
+        if current_operation > total_operations:
+            return redirect(url_for('success')) 
 
     return render_template(
         'TransferProcess.html',
         ship=ship_data,
         current_operation=current_operation,
-        total_operations=total_operations,
-        selected_container=selected_container
+        total_operations=total_operations
     )
+
 
 def Transfer():
     return render_template('Transfer.html')
