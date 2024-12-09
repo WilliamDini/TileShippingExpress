@@ -1,16 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Tile Shipping Express</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading</title>
 </head>
 <body>
-    <p style="text-align: center;">How many containers do you want to load?</p>
-    <form action="/Transfer-loading" method="post" style="text-align: center;">
-        <input type="number" name="num_containers" min="1" required>
-        <button type="submit">Enter</button>
-    </form>
+    <h1>Enter the Number of Containers to Load</h1>
+
     {% if error %}
-    <p style="color: red; text-align: center;">{{ error }}</p>
+    <p style="color: red;">{{ error }}</p>
     {% endif %}
+
+    <form action="/Transfer-loading" method="POST">
+        <label for="num_containers">How many containers do you want to load?</label>
+        <input type="number" name="num_containers" id="num_containers" required>
+        <button type="submit">Enter</button>
+    
+        {% if error %}
+        <p style="color: red;">{{ error }}</p>
+        {% endif %}
+    </form>
+    
 </body>
 </html>
