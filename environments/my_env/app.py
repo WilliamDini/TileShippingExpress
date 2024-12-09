@@ -31,10 +31,6 @@ def Dashboard():
 def Error():
     return render_template('Error.html')
 
-@app.route('/Balance', methods = ["GET", "POST"])
-def Balance():
-    return render_template('Balance.html')
-
 @app.route('/Transfer-loading', methods=["GET", "POST"])
 def loading():
     if request.method == "POST":
@@ -123,32 +119,38 @@ def Transfer():
 def comingoff():
     return render_template('comingoff.html', fileUploaded = DataStore.fileName, ship = DataStore.ship.containers)
 
-@app.route('/FileSelect', methods = ['GET', 'POST'])
+@app.route('/FileSelect', methods=['GET', 'POST'])
 def checkAction():
-    print("In check action", file = sys.stderr)
+    print("In check action", file=sys.stderr)
     if request.method == "POST":
-        print("", file = sys.stderr)
         DataStore.selectOption = request.form['TypeAction']
-        print("The action selected is: " + DataStore.selectOption, file=sys.stderr)
-        return render_template('FileSelect.html', select = DataStore.selectOption)
-    return redirect(url_for('Error'))
+        print(f"The action selected is: {DataStore.selectOption}", file=sys.stderr)
+        return redirect(url_for('fileUpload'))
+    return render_template('FileSelect.html')
 
-@app.route('/typeFile', methods = ['GET', 'POST'])
-def fileUpload():
-    print("In fileUpload", file = sys.stderr)
+@app.route('/Balance', methods=["GET", "POST"])
+def Balance():
     if request.method == "POST":
-        print(DataStore.selectOption, file = sys.stderr)
-        file = request.files['file']
-        DataStore.fileName = file.filename
-        print(DataStore.fileName, file = sys.stderr)
-        file.save(file.filename)
-        DataStore.ship.loadGrid(DataStore.fileName)
-        if(DataStore.selectOption == "Balance"):
-            return render_template('Balance.html', fileUploaded = file.filename, ship = DataStore.ship.containers)
-        elif(DataStore.selectOption == "Transfer"):
-            print("in transfer conditional", file = sys.stderr)
+        print("Balance algorithm triggered", file=sys.stderr)
+        return redirect(url_for('success')) 
+    return render_template('Balance.html', ship=DataStore.ship.containers)
+
+@app.route('/typeFile', methods=['GET', 'POST'])
+def fileUpload():
+    print("In fileUpload", file=sys.stderr)
+    if request.method == "POST":
+        file = request.files.get('file')
+        if file:
+            DataStore.fileName = file.filename
+            file.save(file.filename)
+            print(f"File {file.filename} uploaded successfully", file=sys.stderr)
+            DataStore.ship.loadGrid(DataStore.fileName)
+        if DataStore.selectOption == "Balance":
+            return redirect(url_for('Balance'))
+        elif DataStore.selectOption == "Transfer":
             return redirect(url_for('comingoff'))
-    return redirect(url_for('Error'))
+
+    return redirect(url_for('checkAction'))
 
 @app.route('/Success', methods=["GET"])
 def success():
