@@ -35,14 +35,34 @@ def Error():
 def loading():
     if request.method == "POST":
         num_containers = request.form.get("num_containers")
-        if num_containers.isdigit():
-            print(f"User wants to load {num_containers} containers", file=sys.stderr)
-            DataStore.num_containers_to_load = int(num_containers)
-            
-            return redirect(url_for('transfer_process', current=1))
-        else:
+
+        if not num_containers.isdigit() and not (num_containers.lstrip('-').isdigit()):
             return render_template('loading.html', error="Please enter a valid number.")
+
+        num_containers = int(num_containers)
+
+        if num_containers < 0:
+            print(f"Negative number ({num_containers}) entered. Adjusting to 0.", file=sys.stderr)
+            num_containers = 0
+
+        num_empty_spaces = sum(1 for container in DataStore.ship.containers if container.name == "UNUSED")
+        num_to_unload = len(DataStore.shipChanges)
+        max_loadable = num_empty_spaces + num_to_unload
+
+        if num_containers > max_loadable:
+            return render_template(
+                'loading.html',
+                error=f"The number of containers must be less than or equal to {max_loadable}."
+            )
+
+
+        print(f"User wants to load {num_containers} containers", file=sys.stderr)
+        DataStore.num_containers_to_load = num_containers
+
+        return redirect(url_for('transfer_process', current=1))
+
     return render_template('loading.html')
+
 
 
 @app.route('/Transfer-comingon', methods = ["GET", "POST"])
@@ -60,27 +80,12 @@ def comingon():
     DataStore.ship.printContainers()
     return render_template('comingon.html', ship = DataStore.ship.containers)
 
-@app.route('/Transfer-process-changes', methods = ["GET", "POST"])
-def transferChanges():
-    data = request.get_json()
-    if data and isinstance(data, list):
-        print("Recieved array", file=sys.stderr)
-        selectedIDsString = ""
-        DataStore.shipChanges = data
-        print(DataStore.shipChanges, file=sys.stderr)
-        for element in data:
-            selectedIDsString += element + " "
-        return jsonify({"status": "success", "array" : selectedIDsString})
-    else:
-        DataStore.shipChanges = []
-        print(DataStore.shipChanges, file=sys.stderr)
-        return jsonify({"status": "error", "message": "Recieved Empty List"}), 400
 @app.route('/Transfer-process', methods=["GET", "POST"])
 def transfer_process():
     current_operation = request.args.get("current", 1, type=int)
 
-    num_containers_to_remove = len(DataStore.shipChanges)  
-    num_containers_to_load = getattr(DataStore, 'num_containers_to_load', 0) 
+    num_containers_to_remove = len(DataStore.shipChanges)
+    num_containers_to_load = getattr(DataStore, 'num_containers_to_load', 0)
     total_operations = num_containers_to_remove + num_containers_to_load
 
     ship_data = DataStore.ship.containers
@@ -88,6 +93,7 @@ def transfer_process():
     if request.method == "POST":
         container_name = request.form.get('container_name')
         container_weight = request.form.get('container_weight')
+
         if not container_name or not container_weight:
             return render_template(
                 'TransferProcess.html',
@@ -96,13 +102,34 @@ def transfer_process():
                 total_operations=total_operations,
                 error="Name and weight are required."
             )
+
+        try:
+            container_weight = float(container_weight)  
+        except ValueError:
+            return render_template(
+                'TransferProcess.html',
+                ship=ship_data,
+                current_operation=current_operation,
+                total_operations=total_operations,
+                error="Weight must be a valid number."
+            )
+
+        if container_weight < 0:
+            print(f"Negative weight ({container_weight}) entered. Adjusting to 0.", file=sys.stderr)
+            container_weight = 0  
+        elif container_weight > 9999:
+            print(f"Weight ({container_weight}) exceeds 9999. Adjusting to 9999.", file=sys.stderr)
+            container_weight = 9999 
+        else:
+            container_weight = round(container_weight) 
+
         if current_operation <= len(ship_data):
             ship_data[current_operation - 1].name = container_name
-            ship_data[current_operation - 1].weight = container_weight
+            ship_data[current_operation - 1].weight = f"{int(container_weight):05}"  # Format as 5-digit number
 
         current_operation += 1
         if current_operation > total_operations:
-            return redirect(url_for('success')) 
+            return redirect(url_for('success'))
 
     return render_template(
         'TransferProcess.html',
@@ -110,6 +137,8 @@ def transfer_process():
         current_operation=current_operation,
         total_operations=total_operations
     )
+
+
 
 
 def Transfer():
