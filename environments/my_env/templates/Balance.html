@@ -1,15 +1,37 @@
-<html>
-<meta charset = "UTF-8">
-<meta name="viewport" content="width=device-widthm initial-scale=1">
-<meta name="description" content="Dashboard">
-<link rel="stylesheet" href="{{ url_for('static', filename= 'css/style.css') }}">
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Balance</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
 <body>
-    <div>Balance File Uploaded: {{ fileUploaded }}</div>
+    <h1 class="page-title">Balance Page</h1>
+
+    <div class="grid-container">
+        {% for container in ship %}
+        <div id="{{ container.id }}_{{ container.name }}" 
+            class="grid-item {% if container.name == 'NAN' %}black{% elif container.name == 'UNUSED' %}unused{% else %}active{% endif %}">
+            {% if container.name != 'UNUSED' and container.name != 'NAN' %}
+                <p class="container-name">{{ container.name }}</p>
+                <p class="container-weight">Weight: {{ container.weight }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="button-container">
+        <form action="/Balance" method="post">
+            <button type="submit" class="balance-button">Run Balance Algorithm</button>
+        </form>
+    </div>
+
+    {% if message %}
+    <p class="message">{{ message }}</p>
+    {% endif %}
 </body>
 
 </html>

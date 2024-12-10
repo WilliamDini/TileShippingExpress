@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading</title>
+</head>
+<body>
+    <h1>Enter the Number of Containers to Load</h1>
+
+    {% if error %}
+    <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
+    <form action="/Transfer-loading" method="POST">
+        <label for="num_containers">How many containers do you want to load?</label>
+        <input type="number" name="num_containers" id="num_containers" required>
+        <button type="submit">Enter</button>
+    
+        {% if error %}
+        <p style="color: red;">{{ error }}</p>
+        {% endif %}
+    </form>
+    
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TSE: Transfer Process</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <h1 class="page-title">Transfer Process</h1>
+    <p class="operation-status">Operation {{ current_operation }} of {{ total_operations }}</p>
+
+    <div class="grid-container">
+        {% for container in ship %}
+        <div id="{{ container.id }}_{{ container.name }}" 
+            class="grid-item {% if container.name == 'NAN' %}black{% elif container.name == 'UNUSED' %}unused{% else %}active{% endif %}">
+            {% if container.name != 'UNUSED' and container.name != 'NAN' %}
+                <p class="container-name">{{ container.name }}</p>
+                <p class="container-weight">{{ container.weight }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="form-container">
+        <form action="{{ url_for('transfer_process', current=current_operation) }}" method="post">
+            <label for="container-name">Container Name:</label>
+            <input type="text" id="container-name" name="container_name" required>
+            <label for="container-weight">Container Weight:</label>
+            <input type="text" id="container-weight" name="container_weight" required>
+            <button type="submit" class="submit-button">Submit</button>
+        </form>
+    </div>
+</body>
+
+</html>

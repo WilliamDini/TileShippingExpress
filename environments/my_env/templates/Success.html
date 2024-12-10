@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="../css/Err.css">
+    <link rel="stylesheet" href="../css/Succ.css">
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Error</title>
+    <title>Success</title>
 </head>
 <body>
     <h1>
-        Error
+        Success
     </h1>
     <div class="center">
         <div class="Msg">
-            <p class="ErrMsg">
-                Display Error message here
+            <p class="SuccMsg">
+                Display Completion message here
             </p>
         </div>
         
@@ -22,9 +22,10 @@
 
     <div class="center">
         <div class="back">
-            <button type="button" class="backButton">Go Back</button>
+            <a href="{{ url_for('Dashboard') }}">
+            <button type="button" class="backButton">Continue</button>
         </div>
     </div>
+    
 </body>
-
 </html>

@@ -40,19 +40,16 @@ class Problem():
                 index = 0
     
     def printShipContNested(self):
+        
         for array in self.shipContNested:
             print("[", end = " ")
             for element in array:
-                print(element.name[0:3], end = " ")
-            print("]\n")
-
-#class Frontier:
-
+                print(element.name[0:3] + str(array.index(element)), end = " ")
+            print("] index = " + str(self.shipContNested.index(array)) + "\n")
 
 class ComingOff():
     def __init__(self, shipContNested):
         self.nestedArray = shipContNested
-        #THE Y VALUES ARE REVERSE ie [row 8. row 7, row 6, row 5.....]
 
     def calculateHeuristic(self, GoalX, GoalY, StartX, StartY):
         distance = abs(GoalX - StartX) + abs(GoalY - StartY)
@@ -67,50 +64,51 @@ class ComingOff():
         #print(container.name + ", x = " + str(container.xPos) + ", y = " + str(container.yPos))
         #print(self.nestedArray[abs(container.yPos - 8)][container.xPos - 1].name + ", x = " + str(self.nestedArray[abs(container.yPos - 8)][container.xPos - 1].xPos) + ", y = " + str(self.nestedArray[abs(container.yPos - 8)][container.xPos - 1].yPos))
         #left side
-        if(container.xPos != 1):
-            #print(self.nestedArray[abs(container.yPos - 8)][container.xPos - 2].name)
-            if(self.nestedArray[abs(container.yPos - 8)][container.xPos - 2].name == "UNUSED"):
-                neighbors.append(self.nestedArray[abs(container.yPos - 8)][container.xPos - 2])
+        if(container.xPos != 1): #FIX HERE
+            print(self.nestedArray[container.yPos - 1][container.xPos - 2].name + " left")
+            if(self.nestedArray[container.yPos - 1][container.xPos - 2].name == "UNUSED"):
+                neighbors.append(self.nestedArray[container.yPos - 1][container.xPos - 2])
         #right side
         if(container.xPos != 12):
-            #print(self.nestedArray[abs(container.yPos - 8)][container.xPos].name)
-            if(self.nestedArray[abs(container.yPos - 8)][container.xPos].name == "UNUSED"):
-                neighbors.append(self.nestedArray[abs(container.yPos - 8)][container.xPos])
+            print(self.nestedArray[container.yPos - 1][container.xPos].name + " right")
+            if(self.nestedArray[container.yPos - 1][container.xPos].name == "UNUSED"):
+                neighbors.append(self.nestedArray[container.yPos - 1][container.xPos])
         #above
-        if(container.yPos != 8):
-            #print(self.nestedArray[abs(container.yPos - 8) - 1][container.xPos - 1].name)
-            if(self.nestedArray[abs(container.yPos - 8) - 1][container.xPos - 1].name == "UNUSED"):
-                neighbors.append(self.nestedArray[abs(container.yPos - 8) - 1][container.xPos - 1])
-        #below
         if(container.yPos != 1):
-            #print(self.nestedArray[abs(container.yPos - 8) + 1][container.xPos - 1].name)
-            if(self.nestedArray[abs(container.yPos - 8) + 1][container.xPos - 1].name == "UNUSED"):
-                neighbors.append(self.nestedArray[abs(container.yPos - 8) + 1][container.xPos - 1])
+            print(self.nestedArray[container.yPos - 2][container.xPos -1].name + " above")
+            if(self.nestedArray[container.yPos - 2][container.xPos - 1].name == "UNUSED"):
+                neighbors.append(self.nestedArray[container.yPos- 2][container.xPos - 1])
+        #below
+        if(container.yPos != 8):
+            print(self.nestedArray[container.yPos][container.xPos - 1].name + " below")
+            if(self.nestedArray[container.yPos][container.xPos - 1].name == "UNUSED"):
+                neighbors.append(self.nestedArray[container.yPos][container.xPos - 1])
         
         #print("neighbors length: " + str(len(neighbors)))
+        #index = 0
         #for element in neighbors:
-            #print(element.name + ", x = "  + str(element.xPos) + ", y = " + str(element.yPos))
+        #    print(element.name + ", x = "  + str(element.xPos) + ", y = " + str(element.yPos))
 
         return neighbors
 
 #moves blocked containers, MUST CHANGE NESTED ARRAY to reflect changes    
-    def moveBlockingContainer(self, container , direction):
+    def moveBlockingContainer(self, container , direction, path):
         self.direction = direction
-        startNode = Node(container, container.xPos, container.yPos, "start")
-        path = []
-
+        self.path = path
         #need fix if more complex cases
         if direction == "above":
-            GoalX = container.xPos + 1
+            GoalX = container.xPos
             for array in self.nestedArray:
                 print("The name of observed container " + array[GoalX].name)
                 if array[GoalX].name == "UNUSED":
                     continue
                 else:
-                    GoalY = array[GoalX].yPos + 2
+                    GoalY = array[GoalX].yPos - 2
                     break
         print("Goal State: x = " + str(GoalX) + ", y = " + str(GoalY))
 
+        startNode = Node(container, container.xPos - 1, container.yPos - 1, "start")
+        #path = []
         # 1) create two lists open and closed ^
         self.open = []
         self.closed = []
@@ -128,6 +126,9 @@ class ComingOff():
         iteration = 1
         # 3) loop through open list
         while(self.open):
+            #check above cell
+            #print("position of cell above container: x = " + str(self.nestedArray[container.yPos][container.xPos].x) + ", y = " + str(self.nestedArray[container.yPos][container.xPos].y))
+            #if(self.nestedArray[container.yPos])
 
             #select node with lowest f score from open list
             currNode = self.open[0]
@@ -136,12 +137,21 @@ class ComingOff():
                     currNode = element
             print("lowest score f node: " + currNode.container.name + ", fscore = " + str(currNode.f) + ", x = " + str(currNode.container.xPos) + ", y = " + str(currNode.container.yPos))
             
-            #check if at the goal state (x = 1, y = 8)
-            if(currNode.container.xPos == GoalX) and (currNode.container.yPos == GoalY):
+            #check if at the goal state (x = 1, y = 1)
+            if(currNode.container.xPos == GoalX + 1) and (currNode.container.yPos == GoalY + 1):
                 print("in goal node check")
                 while currNode:
                     path.append(currNode)
                     currNode = currNode.parent
+
+                #change nested container array to reflect changes in here
+                self.nestedArray[container.yPos - 1][container.xPos - 1].name = "UNUSED"
+                self.nestedArray[container.yPos - 1][container.xPos - 1].weight = "00000"
+                self.nestedArray[GoalY][GoalX] = container
+
+                for element in path:
+                    print(element.container.name + " " + str(element.x) + " " + str(element.y))
+
                 return path[::-1] #return path reversed
 
             #move node to closed list
@@ -168,10 +178,10 @@ class ComingOff():
                     continue
 
             # 4.3) calculate g h and f costs for each neighbor
-                neighborNode = Node(neighbor, neighbor.xPos, neighbor.yPos, "neighbor")
+                neighborNode = Node(neighbor, neighbor.xPos - 1, neighbor.yPos - 1, "neighbor")
                 neighborNode.g = 1
                 print("neighbor node x and y values: x = " + str(neighbor.xPos) + ", y = " + str(neighbor.yPos))
-                neighborNode.h = self.calculateHeuristic(GoalX, GoalY, neighbor.xPos, neighbor.yPos)
+                neighborNode.h = self.calculateHeuristic(GoalX, GoalY, neighborNode.x, neighborNode.y)
                 neighborNode.f = neighborNode.g + neighborNode.h
                 neighborNode.parent = currNode
 
@@ -181,26 +191,26 @@ class ComingOff():
 
             print("length of open: " + str(len(self.open)))
             iteration = iteration + 1
-            #if iteration > 10:
-            #    break
+            if iteration > 3:
+                break
 
         #account for blocked containers
-        #print("containerblocking: name: " + self.nestedArray[abs(container.yPos - 8) - 1][container.xPos - 1].name + ", x = " + str(self.nestedArray[abs(container.yPos - 8) - 1][container.xPos - 1].xPos) + ", y = " + str(self.nestedArray[abs(container.yPos - 8) - 1][container.xPos - 1].yPos))
+        print("containerblocking: name: " + self.nestedArray[container.yPos - 2][container.xPos - 1].name + ", x = " + str(self.nestedArray[container.yPos - 2][container.xPos - 1].xPos) + ", y = " + str(self.nestedArray[container.yPos - 2][container.xPos - 1].yPos))
         path.append(self.moveBlockingContainer(self.nestedArray[abs(container.yPos - 8) - 1][container.xPos - 1], "above"))
 
         return None
     
     #returns path to take container off (start position to (x = 1, y = 8))
-    def moveContainerOff(self, container):
-        startNode = Node(container, container.xPos, container.yPos, "start")
-        path = []
+    def moveContainerOff(self, container, path):
+        startNode = Node(container, container.xPos - 1, container.yPos - 1, "start")
+        self.path = path
         # 1) create two lists open and closed ^
         self.open = []
         self.closed = []
 
         # 2) evaluate current node f = g + h, then add to open list
         print("start node x and y values: x = " + str(startNode.x) + ", y = " + str(startNode.y))
-        startNode.h = self.calculateHeuristic(1, 8, startNode.x, startNode.y)
+        startNode.h = self.calculateHeuristic(0, 0, startNode.x, startNode.y)
         startNode.f = startNode.g + startNode.h
     
         self.open.append(startNode)
@@ -212,7 +222,7 @@ class ComingOff():
         # 3) loop through open list
         while(self.open):
             #check above cell
-            print("position of cell above container: x = " + str(self.nestedArray[container.yPos][container.xPos].x) + ", y = " + str(self.nestedArray[container.yPos][container.xPos].y))
+            #print("position of cell above container: x = " + str(self.nestedArray[container.yPos][container.xPos].x) + ", y = " + str(self.nestedArray[container.yPos][container.xPos].y))
             #if(self.nestedArray[container.yPos])
 
             #select node with lowest f score from open list
@@ -222,12 +232,17 @@ class ComingOff():
                     currNode = element
             print("lowest score f node: " + currNode.container.name + ", fscore = " + str(currNode.f) + ", x = " + str(currNode.container.xPos) + ", y = " + str(currNode.container.yPos))
             
-            #check if at the goal state (x = 1, y = 8)
-            if(currNode.container.xPos == 1) and (currNode.container.yPos == 8):
+            #check if at the goal state (x = 1, y = 1)
+            if(currNode.container.xPos == 1) and (currNode.container.yPos == 1):
                 print("in goal node check")
                 while currNode:
                     path.append(currNode)
                     currNode = currNode.parent
+
+                print(len(path))
+                #for element in path:
+                #    print(element.container.name + " " + str(element.x) + " " + str(element.y))
+
                 return path[::-1] #return path reversed
 
             #move node to closed list
@@ -254,10 +269,10 @@ class ComingOff():
                     continue
 
             # 4.3) calculate g h and f costs for each neighbor
-                neighborNode = Node(neighbor, neighbor.xPos, neighbor.yPos, "neighbor")
+                neighborNode = Node(neighbor, neighbor.xPos - 1, neighbor.yPos - 1, "neighbor")
                 neighborNode.g = 1
                 print("neighbor node x and y values: x = " + str(neighbor.xPos) + ", y = " + str(neighbor.yPos))
-                neighborNode.h = self.calculateHeuristic(1, 8, neighbor.xPos, neighbor.yPos)
+                neighborNode.h = self.calculateHeuristic(0, 0, neighborNode.x, neighborNode.y)
                 neighborNode.f = neighborNode.g + neighborNode.h
                 neighborNode.parent = currNode
 
@@ -267,17 +282,19 @@ class ComingOff():
 
             print("length of open: " + str(len(self.open)))
             iteration = iteration + 1
-            #if iteration > 10:
+            #if iteration > 3:
             #    break
 
         #account for blocked containers
-        print("containerblocking: name: " + self.nestedArray[abs(container.yPos - 8) - 1][container.xPos - 1].name + ", x = " + str(self.nestedArray[abs(container.yPos - 8) - 1][container.xPos - 1].xPos) + ", y = " + str(self.nestedArray[abs(container.yPos - 8) - 1][container.xPos - 1].yPos))
-        path.append(self.moveBlockingContainer(self.nestedArray[abs(container.yPos - 8) - 1][container.xPos - 1], "above"))
+        print("containerblocking: name: " + self.nestedArray[container.yPos - 2][container.xPos - 1].name + ", x = " + str(self.nestedArray[container.yPos - 2][container.xPos - 1].xPos) + ", y = " + str(self.nestedArray[container.yPos - 2][container.xPos - 1].yPos))
+        path.append(self.moveBlockingContainer(self.nestedArray[container.yPos - 2][container.xPos - 1], "above", path))
+        print("after running move containers")
+        self.moveContainerOff(container, path)
 
         return None
         
 newShip = Ship()
-newShip.loadGrid("ShipCase4.txt")
+newShip.loadGrid("ShipCase3.txt")
 newShip.printContainers()
 Problem = Problem(newShip.containers)
 Problem.loadNestedContainers()
@@ -285,9 +302,10 @@ Problem.printShipContNested()
 newComingOff = ComingOff(Problem.shipContNested)
 for array in Problem.shipContNested:
     for element in array:
-        if(element.name == "Cat"):
+        if(element.name == "Ewe"):
             container = element
-pathArray = newComingOff.moveContainerOff(container)
+pathArray = newComingOff.moveContainerOff(container, [])
+print(len(pathArray))
 
 print("path is: ")
 if(pathArray == None):
