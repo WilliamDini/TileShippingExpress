@@ -52,7 +52,7 @@ def canMove(grid, i, j):
     return False
 
 def moveContainer(grid):
-    # Find closest free spot on lighter side,
+    newPos = findOpenSpot(grid,)
     print()
 
 def findOpenSpot(grid, lhs, rhs, side):
@@ -95,6 +95,7 @@ def moveBlocked(grid, i, j):    # WORKS NOWWWWWWWWWWWWWWWW
     col = j
     row = 0
     newCor = {} # 
+    newGrid = grid
     print("row:",row,"col:",col)
     while True:
         cont = grid[row][col] # cont = container that is blocking and needs to be moved. Here cont is set to top of col
@@ -123,10 +124,17 @@ def moveBlocked(grid, i, j):    # WORKS NOWWWWWWWWWWWWWWWW
                 rCol = rCol+1
             if lCol >= 0 and grid[tempRow][lCol] == 0:
                 newCor[cont] = tempRow,lCol
+                temp = grid[row][col]
+                grid[row][col] = 0
+                grid[tempRow][lCol] = temp
                 found = True
                 break
             elif rCol >= 0 and grid[tempRow][rCol] == 0:
+              #  print("tempRow:",tempRow,"rCol:",rCol)
                 newCor[cont] = tempRow,rCol
+                temp = grid[row][col]
+                grid[row][col] = 0
+                grid[tempRow][rCol] = temp
                 found = True
                 break
             else:
@@ -219,12 +227,12 @@ def balance(grid):
         block = {}
         if (canMove(grid,containers[bestContainerWeight][0],containers[bestContainerWeight][1])):
             print("Container can be moved!")
+            moving = findOpenSpot(grid,lhs,rhs,1)
+            print("moving:",moving)
         else:
             print("Container cannot be moved!")
             block = moveBlocked(grid,containers[bestContainerWeight][0],containers[bestContainerWeight][1])
-            print(block)
-        moving = findOpenSpot(grid,lhs,rhs,1)
-        print(moving)
+            print("blocked:",block)
         #print(currContainer)
         #print("HEREEEEEEEEEEEE",currVals)
         
@@ -235,7 +243,7 @@ def balance(grid):
         
         
         #Move the container
-        
+        print("LOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOL:",grid)
         
         #Update Containers
         isBalanced = True
@@ -269,8 +277,8 @@ def calculate_balance(grid):
 
 
 ShipOne = [
-            [20, 0, 0, 0],
-            [3, 7, 30, 40]
+            [20, 30, 0, 0],
+            [3, 7, 0, 40]
         ]
 
 # [2,1], [2,2], [1,1], [1,2]
