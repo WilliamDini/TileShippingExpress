@@ -52,45 +52,89 @@ def canMove(grid, i, j):
     return False
 
 def moveContainer(grid):
-    # Should we actually move container in the way to furthest location??
+    # Find closest free spot on lighter side,
     print()
 
-def moveBlocked(grid, i, j):    # This is not done, dont call or run fails
-    #print("HEEEEEEEEEEEEEEEEEEEEEEEEEEEE", len(grid)-1)
-    row = 0
+def findOpenSpot(grid, lhs, rhs, side):
+    Halfsies = int(len(grid[0])) // 2
+    ShipGoalSide = []
+    print("lhs",lhs,"rhs:",rhs)
+    
+    if side == 1: #Right Side is Lighter
+        for row in grid: 
+            ShipGoalSide.append(row[Halfsies:])
+            Side = True
+    else:                     #Left Side is Lighter
+        for row in grid:
+            ShipGoalSide.append(row[:Halfsies])
+        
+    print(ShipGoalSide)
+    
+
+
+    for row in range(len(ShipGoalSide)):
+        print("row:",row)
+        for pos in ShipGoalSide[row]:
+            print("pos:",pos)
+            if ShipGoalSide[row][pos] == 0:
+                if (row == len(ShipGoalSide) - 1): # On Ground
+                    if Side:    # If right side is lighter
+                        return [row, pos + len(ShipGoalSide[0])]
+                    else:   # If left side is lighter
+                        return [row, pos]
+                    
+                if row-1 < len(ShipGoalSide) and ShipGoalSide[row-1][pos] != 0: # Not Floating
+                    if Side:    # Right lighter side
+                        return [row, pos + len(ShipGoalSide[0])]
+                    else:   # Left lighter side
+                        [row, pos]
+    print("LAMAYOOOOOOOOO")
+    return []
+
+def moveBlocked(grid, i, j):    # WORKS NOWWWWWWWWWWWWWWWW 
     col = j
+    row = 0
     newCor = {} # 
+    print("row:",row,"col:",col)
     while True:
         cont = grid[row][col] # cont = container that is blocking and needs to be moved. Here cont is set to top of col
         found = False
+        print("cont =",cont)
         while cont == 0:    # Find first container to move that is blocking 
             row = row + 1   # Go down in row, same col, to find first blocking container
+            print("HIIIII",row,"AA",col)
             cont = grid[row][col]
         if cont == grid[i][j]:
             break
-        lCol = 0
-        rCol = 0
-        tempRow = len(grid)-1
-        print("temprow:", tempRow)
-        while (found is False):
-            if (lCol < 0 or tempRow < 0):  # This current column is full and we are now out of bounds
-                lCol = len(grid[row])-1    # reset cols to bottom of grid
-                rCol = lCol
-                print("HEEEEEEEEEEEEEEEEEEEEEEEEEEEE", lCol)
+        lCol = j-1
+        rCol = j+1
+        # print("rCol",rCol)
+        # print("lCol",lCol)
+        tempRow = len(grid)-1   # Set tempRow to bottom of the grid, or the last row
+        #print("temprow:", tempRow)
+        while (found is False):     # While a free spot hasnt been found
+            #print("HIIIIIIIII")
+            if lCol < 0 and rCol < 0:
+                print("No free spaces anywhere on ship!")
+                return {} 
+            if tempRow < 0:
                 tempRow = len(grid)-1
-            if grid[tempRow][lCol] == 0:    # left of col is closest free spot so save that coord
+                lCol = lCol-1
+                rCol = rCol+1
+            if lCol >= 0 and grid[tempRow][lCol] == 0:
                 newCor[cont] = tempRow,lCol
                 found = True
-            elif grid[tempRow][rCol] == 0:  # right of col is closest free spot so save that coord
+                break
+            elif rCol >= 0 and grid[tempRow][rCol] == 0:
                 newCor[cont] = tempRow,rCol
                 found = True
+                break
             else:
                 tempRow = tempRow - 1
-        
-    return newCor
-            
+        row = row + 1
 
-                
+        
+    return newCor                        
             
 def bestMove(grid, lhs, rhs, side):
     min = 10000
@@ -115,6 +159,7 @@ def bestMove(grid, lhs, rhs, side):
     # MAKE HASHMAP WITH WEIGHTS AND COORDS. USE WEIGHTS FROM BEST MOVE TO FIND COORDS OF BEST WEIGHT TO MOVE
 
 def balance(grid):
+    tempGrid = grid
     containers = {}
     gridCoords = getGCoord(grid)
     codeCoords = getCCoord(grid)
@@ -125,6 +170,8 @@ def balance(grid):
         return [], [], True   
     
     lhs, rhs, isBalanced = calculate_balance(grid)
+
+    print("lhs:",lhs,"rhs:",rhs)
     
     if isBalanced:
         return None, True
@@ -144,25 +191,27 @@ def balance(grid):
         #Pick Side to Start on
         if lhs > rhs:
             for Position in codeCoords:
-                if ((Position[1] <= Half) and (grid[Position[0]][Position[1]] != 0)):
+                if ((Position[1] < Half) and (grid[Position[0]][Position[1]] != 0)):
                     currContainer.append(Position)
                     currVals.append(grid[Position[0]][Position[1]])
                     containers[grid[Position[0]][Position[1]]] = Position
             
         else:
             for Position in codeCoords:
-                print("X",Position)
-                if ((Position[1] > Half) and (grid[Position[0]][Position[1]] != 0)):
+                #print("X",Position)
+                if ((Position[1] >= Half) and (grid[Position[0]][Position[1]] != 0)):
                     currContainer.append(Position)
                     currVals.append(grid[Position[0]][Position[1]])
+                    containers[grid[Position[0]][Position[1]]] = Position
 
                     
 
-        print("Code Coords:",codeCoords)
-        print("Grid Coords:",gridCoords)
-        print("Coords of containers on side that is greater weight:",currContainer)        
+        # print("Code Coords:",codeCoords)
+        # print("Grid Coords:",gridCoords)
+        #print("Coords of containers on side that is greater weight:",currContainer)        
         print("Container weights associated with the coords",currVals)
-        bestContainerWeight = bestMove(currVals,lhs,rhs,0)
+        side = 0 if lhs > rhs else 1
+        bestContainerWeight = bestMove(currVals,lhs,rhs,side)
         print("Best container weight to move:",bestContainerWeight)
 
         print(containers[bestContainerWeight])
@@ -172,7 +221,10 @@ def balance(grid):
             print("Container can be moved!")
         else:
             print("Container cannot be moved!")
-            #block = moveBlocked(grid,containers[bestContainerWeight][0],containers[bestContainerWeight][1])
+            block = moveBlocked(grid,containers[bestContainerWeight][0],containers[bestContainerWeight][1])
+            print(block)
+        moving = findOpenSpot(grid,lhs,rhs,1)
+        print(moving)
         #print(currContainer)
         #print("HEREEEEEEEEEEEE",currVals)
         
@@ -203,8 +255,9 @@ def calculate_balance(grid):
     
     for Row in grid:
         Half = len(Row) // 2
+        #print("ROWWWW",Row,"HALFFFF",Half)
         for Slot in range(len(Row)):
-            if Slot <= Half:
+            if Slot < Half:
                 lhsWeight += Row[Slot]
             else:
                 rhsWeight += Row[Slot]
@@ -216,8 +269,8 @@ def calculate_balance(grid):
 
 
 ShipOne = [
-            [20, 30, 0, 0],
-            [3, 7, 0, 40]
+            [20, 0, 0, 0],
+            [3, 7, 30, 40]
         ]
 
 # [2,1], [2,2], [1,1], [1,2]
