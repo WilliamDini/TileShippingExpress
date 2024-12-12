@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-widthm initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Login">
-    <link rel="stylesheet" href="style.css">
-    
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <title>TSE: Login</title>
-    
-    <body>
-        <div class = body2>
-            <form action="{{ url_for('Dashboard') }}" method = "post">
+</head>
+<body>
+    <div class="body2">
+        <form action="{{ url_for('Login') }}" method="post"> <!-- Correct action here -->
             <label for="username">Username:</label>
-            <input type="text" id="username" name="user" placeholder="user">
+            <input type="text" id="username" name="user" placeholder="user" required>
             <button type="submit">Login</button>
-            </form>
-        </div>
-    </body>
+        </form>
+    </div>
+</body>
 </html>

@@ -1,8 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 import sys
 from grid import *
-from datetime import datetime, timezone
-import pytz
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = 'DrKeoghRocks'
@@ -12,24 +11,19 @@ class DataStore():
     fileName = "not set"
     shipChanges = []
 
-log_file = 'logfile.log' 
-pst_timezone = pytz.timezone('US/Pacific')
+log_file = 'logfile.log'
+
 
 def log(append_str):
-    utc_now = datetime.now(timezone.utc)
-    pst_now = utc_now.replace(tzinfo=pytz.utc).astimezone(pst_timezone)
-
-    timestamp = pst_now.strftime('%H:%M')
-
     with open(log_file, 'a') as f:
-        f.write(f'{timestamp} {append_str}\n')
+        f.write(datetime.now().strftime('%Y-%m-%d %H:%M') + ' ' + append_str + '\n')
 
 @app.route('/', methods = ["GET", "POST"])
 def Login():
     if request.method == "POST":
         user = request.form.get('user', 'Guest') 
         session['user'] = user 
-        log(user + "has logged in.")
+        log(f"{user} has logged in.")
         return redirect(url_for('Dashboard'))  
     return render_template('Login.html') 
 
@@ -152,9 +146,6 @@ def transfer_process():
         total_operations=total_operations
     )
 
-
-
-
 def Transfer():
     return render_template('Transfer.html')
 
@@ -168,13 +159,14 @@ def checkAction():
     if request.method == "POST":
         DataStore.selectOption = request.form['TypeAction']
         print(f"The action selected is: {DataStore.selectOption}", file=sys.stderr)
-        log(DataStore.selectOption + 'was selected by operator')
+        log(DataStore.selectOption + ' was selected by operator.')
         return redirect(url_for('fileUpload'))
     return render_template('FileSelect.html')
 
 @app.route('/Balance', methods=["GET", "POST"])
 def Balance():
     if request.method == "POST":
+        log("Balance algorithm triggered.")
         print("Balance algorithm triggered", file=sys.stderr)
         return redirect(url_for('success')) 
     return render_template('Balance.html', ship=DataStore.ship.containers)
@@ -188,6 +180,7 @@ def fileUpload():
             DataStore.fileName = file.filename
             file.save(file.filename)
             print(f"File {file.filename} uploaded successfully", file=sys.stderr)
+            log(file.filename + ' was uploaded')
             DataStore.ship.loadGrid(DataStore.fileName)
         if DataStore.selectOption == "Balance":
             return redirect(url_for('Balance'))
@@ -199,3 +192,8 @@ def fileUpload():
 @app.route('/Success', methods=["GET"])
 def success():
     return render_template('Success.html')
+
+if __name__ == "__main__":
+    if not os.path.exists(log_file):
+        open(log_file, 'w').close() 
+    app.run(debug=True)
