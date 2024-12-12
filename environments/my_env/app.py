@@ -1,6 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 import sys
 from grid import *
+from Transfer import *
+from datetime import datetime, timezone
+import pytz
 
 app = Flask(__name__)
 app.secret_key = 'DrKeoghRocks'
@@ -9,13 +12,26 @@ class DataStore():
     ship = Ship()
     fileName = "not set"
     shipChanges = []
+    #shipCntrOn = []
 
+log_file = 'logfile.log' 
+pst_timezone = pytz.timezone('US/Pacific')
+
+def log(append_str):
+    utc_now = datetime.now(timezone.utc)
+    pst_now = utc_now.replace(tzinfo=pytz.utc).astimezone(pst_timezone)
+
+    timestamp = pst_now.strftime('%H:%M')
+
+    with open(log_file, 'a') as f:
+        f.write(f'{timestamp} {append_str}\n')
 
 @app.route('/', methods = ["GET", "POST"])
 def Login():
     if request.method == "POST":
         user = request.form.get('user', 'Guest') 
         session['user'] = user 
+        log(user + "has logged in.")
         return redirect(url_for('Dashboard'))  
     return render_template('Login.html') 
 
@@ -62,7 +78,6 @@ def loading():
         return redirect(url_for('transfer_process', current=1))
 
     return render_template('loading.html')
-
 
 
 @app.route('/Transfer-comingon', methods = ["GET", "POST"])
@@ -138,8 +153,26 @@ def transfer_process():
         total_operations=total_operations
     )
 
+#IMPORTANT KEEP THIS TO HANDLE WHICH CONTAINERS SELECTED
+@app.route('/Transfer-process-changes', methods = ["GET", "POST"])
+def transferChanges():
+    data = request.get_json()
+    if data and isinstance(data, list):
+        print("Recieved array", file=sys.stderr)
+        selectedIDsString = ""
+        DataStore.shipChanges = data
+        print(DataStore.shipChanges, file=sys.stderr)
+        for element in data:
+            selectedIDsString += element + " "
+        return jsonify({"status": "success", "array" : selectedIDsString})
+    else:
+        DataStore.shipChanges = []
+        print(DataStore.shipChanges, file=sys.stderr)
+        return jsonify({"status": "error", "message": "Recieved Empty List"}), 400
 
-
+#@app.route('/Transfer-path', methods = ["GET", "POST"])
+#def path():
+#    return
 
 def Transfer():
     return render_template('Transfer.html')
@@ -154,6 +187,7 @@ def checkAction():
     if request.method == "POST":
         DataStore.selectOption = request.form['TypeAction']
         print(f"The action selected is: {DataStore.selectOption}", file=sys.stderr)
+        log(DataStore.selectOption + 'was selected by operator')
         return redirect(url_for('fileUpload'))
     return render_template('FileSelect.html')
 

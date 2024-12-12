@@ -49,6 +49,11 @@ class Problem():
                 print(element.name[0:3] + str(array.index(element)), end = " ")
             print("] index = " + str(self.shipContNested.index(array)) + "\n")
 
+class PathParser():
+    def __init__(self, shipContainers):
+        self.shipContainers = shipContainers
+        self.shipContNested = []
+
 class Transfer():
     def __init__(self, shipContNested):
         self.nestedArray = shipContNested
@@ -300,7 +305,7 @@ class Transfer():
                 #for element in path:
                 #    print(element.container.name + " " + str(element.x) + " " + str(element.y))
 
-                return path[::-1] #return path reversed
+                return path #return path reversed
 
             #move node to closed list
             self.closed.append(currNode)
@@ -351,7 +356,7 @@ class Transfer():
             return []
         #print("after running move containers")
         self.moveContainerOff(container, path)
-        return path[::-1]
+        return path
 
 #moves blocked containers, MUST CHANGE NESTED ARRAY to reflect changes    
     def moveBlockingContainer(self, container , direction, path, check):
@@ -369,7 +374,7 @@ class Transfer():
                 else:
                     GoalY = array[GoalX].yPos - 2
                     break
-        #print("Goal State: x = " + str(GoalX) + ", y = " + str(GoalY))
+        print("Goal State: x = " + str(GoalX) + ", y = " + str(GoalY))
 
         startNode = Node(container, container.xPos - 1, container.yPos - 1, "start")
         #path = []
@@ -402,7 +407,7 @@ class Transfer():
             #print("lowest score f node: " + currNode.container.name + ", fscore = " + str(currNode.f) + ", x = " + str(currNode.container.xPos) + ", y = " + str(currNode.container.yPos))
             
             #check if at the goal state (x = 1, y = 1)
-            if(currNode.container.xPos == GoalX + 1) and (currNode.container.yPos == GoalY + 1):
+            if(currNode.container.xPos == (GoalX + 1)) and (currNode.container.yPos == (GoalY + 1)):
                 #print("in goal node check")
                 while currNode:
                     path.append(str(currNode.container.xPos) + " " + str(currNode.container.yPos) + " " + str(currNode.container.weight) + " " + str(currNode.container.name))
@@ -469,9 +474,9 @@ class Transfer():
                     self.open.append(neighborNode)
 
             #print("length of open: " + str(len(self.open)))
-            iteration = iteration + 1
-            if iteration > 10:
-                break
+            #iteration = iteration + 1
+            #if iteration > 10:
+            #    break
         #account for blocked containers
         #print("containerblocking: name: " + self.nestedArray[container.yPos - 2][container.xPos - 1].name + ", x = " + str(self.nestedArray[container.yPos - 2][container.xPos - 1].xPos) + ", y = " + str(self.nestedArray[container.yPos - 2][container.xPos - 1].yPos))
         #print("check " + str(self.check))
@@ -481,7 +486,32 @@ class Transfer():
         path.append(self.moveBlockingContainer(self.nestedArray[container.yPos - 2][container.xPos - 1], "above", path, self.check))
         return path
 
-    def returnShipArray(self, nestedArray):
+    def returnPathArray(self, path):
+        print("in returnPathArray")
+        arrayOfSteps = []
+        arrayOfOps = []
+        for element in path:
+            temp = element.split()
+            arrayOfSteps.append(temp)
+            print(temp)
+        print(arrayOfSteps)
+
+        temp = []
+        for element in arrayOfSteps:
+            if element[3] == "UNUSED":
+                temp.append(element)
+            else:
+                temp.append(element)
+                arrayOfOps.append(temp)
+                temp = []
+        index = 0
+        for element in arrayOfOps:
+            arrayOfOps[index] = arrayOfOps[index][::-1]
+            print(arrayOfOps[index])
+            index = index + 1
+        return
+
+    def returnShipArrays(self, nestedArray):
         arrayRet = []
         self.nestedArray = nestedArray
         for array in nestedArray:
@@ -489,51 +519,54 @@ class Transfer():
                 arrayRet.append(element)
         arrayRet.sort(key=lambda c: (c.yPos, c.xPos))
 
-# #testing ship coming off
-# newShip = Ship()
-# newShip.loadGrid("ShipCase2.txt")
-# newShip.printContainers()
-# Problem = Problem(newShip.containers)
-# Problem.loadNestedContainers()
-# Problem.printShipContNested()
-# Transfer = Transfer(Problem.shipContNested)
-# for array in Problem.shipContNested:
-#     for element in array:
-#         if(element.name == "Cat"):
-#             container = element
-# pathArray = Transfer.moveContainerOff(container, [])
-# print(type(pathArray))
-# newPathArray = []
-# for element in pathArray:
-#     if type(element) != list:
-#         newPathArray.append(element)
+#testing ship coming off
+newShip = Ship()
+newShip.loadGrid("ShipCase4.txt")
+newShip.printContainers()
+Problem = Problem(newShip.containers)
+Problem.loadNestedContainers()
+Problem.printShipContNested()
+Transfer = Transfer(Problem.shipContNested)
+for array in Problem.shipContNested:
+    for element in array:
+        if(element.name == "Cat"):
+            container = element
+pathArray = Transfer.moveContainerOff(container, [])
+print(type(pathArray))
+newPathArray = []
+for element in pathArray:
+    if type(element) != list:
+        newPathArray.append(element)
 
-# #newPathArray = newPathArray[::-1]
+#newPathArray = newPathArray[::-1]
 
-# print("path is: ")
-# if(newPathArray == None):
-#     print("No path available")
-# else:
-#     for element in newPathArray:
-#         print(element)
-# Problem.printShipContNested()
-# #print("simulate taking out container from top left")
-# Transfer.nestedArray[0][0].name = "UNUSED"
-# Transfer.nestedArray[0][0].weight = "00000"
+Transfer.returnPathArray(newPathArray)
 
-# #testing ship coming on
-# pathArray = Transfer.moveContainerOn("01234", "Liam", [])
-# print(type(pathArray))
-# newPathArray = []
-# for element in pathArray:
-#     if type(element) != list:
-#         newPathArray.append(element)
-# #newPathArray = newPathArray[::-1]
+print("path is: ")
+if(newPathArray == None):
+    print("No path available")
+else:
+    for element in newPathArray:
+        print(element)
+Problem.printShipContNested()
+#print("simulate taking out container from top left")
+Transfer.nestedArray[0][0].name = "UNUSED"
+Transfer.nestedArray[0][0].weight = "00000"
 
-# print("path is: ")
-# if(newPathArray == None):
-#     print("No path available")
-# else:
-#     for element in newPathArray:
-#         print(element)
-# Problem.printShipContNested()
+#testing ship coming on
+pathArray = Transfer.moveContainerOn("01234", "Liam", [])
+print(type(pathArray))
+newPathArray = []
+for element in pathArray:
+    if type(element) != list:
+        newPathArray.append(element)
+#newPathArray = newPathArray[::-1]
+
+print("path is: ")
+if(newPathArray == None):
+    print("No path available")
+else:
+    for element in newPathArray:
+        print(element)
+Problem.printShipContNested()
+
