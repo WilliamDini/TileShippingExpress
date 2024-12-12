@@ -78,3 +78,27 @@
     padding: 3px;
     position: absolute;
 }
+.grid-item.unused {
+    background-color: #ffffff;
+    border: 1px solid black;
+}
+
+/* Active spaces with default white background */
+.grid-item.active {
+    background-color: white;
+}
+
+/* Hover effect for grid items */
+.grid-container > div:hover {
+    background: rgba(12, 230, 102, 0.8);
+    border: 5px solid rgb(12, 230, 102);
+    text-align: center;
+    align-items: center;
+    font-size: 15px;
+    align-content: center;
+}
+.grid-item.black {
+    background-color: black;
+    border: none; 
+    color: white;
+}
