@@ -148,6 +148,52 @@ def moveBlocked(grid, i, j,movements):    # WORKS NOWWWWWWWWWWWWWWWW
         movements.append("("+str(row)+","+str(col)+") => ("+str(newX)+","+str(newY)+")")
         #print("grid during block:",grid)
     return
+
+def calcCost(grid,i,j,x,y,movs):    # i,j = curPos => x,y = goalPos
+    movs.append("("+str(i)+","+str(j)+" tempweight tempname")
+    cost = 0
+    tempx = i
+    tempy = j
+    while True:        
+        c = {} # Coords dict
+        # Check left cell
+        if (tempy-1 >= 0):
+            if (grid[tempx][tempy-1] == 0):
+                heur = manhattanDis([tempx,tempy-1],[x,y])
+                if heur not in c:
+                    c[heur] = [tempx,tempy-1]
+        # Check right cell
+        if (tempy+1 < len(grid[0])):
+            if (grid[tempx][tempy+1] == 0):
+                heur = manhattanDis([tempx,tempy+1],[x,y])
+                if heur not in c:
+                    c[heur] = [tempx,tempy+1]
+        # Check below cell
+        if (tempx+1 < len(grid)):
+            if (grid[tempx+1][tempy] == 0):
+                heur = manhattanDis([tempx+1,tempy],[x,y])
+                if heur not in c:
+                    c[heur] = [tempx+1,tempy]
+        # Check above cell
+        if (tempx-1 >= 0):
+            if (grid[tempx-1][tempy] == 0):
+                heur = manhattanDis([tempx-1,tempy],[x,y])
+                if heur not in c:
+                    c[heur] = [tempx-1,tempy]
+        sorted_c = dict(sorted(c.items()))
+        optVal = list(sorted_c.keys())[0]
+        newx = c[optVal][0]
+        newy = c[optVal][1]
+        tempx = newx
+        tempy = newy
+        movs.append("("+str(newx)+","+str(newy)+" tempweight tempname")
+        cost = cost + 1
+
+                        
+                        
+                    
+
+    
             
 def validSpot(grid,i,j):
     # Check if spot is on the ground
