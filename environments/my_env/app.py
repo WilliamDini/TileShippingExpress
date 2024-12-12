@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 import sys
 from grid import *
+from datetime import datetime, timezone
+import pytz
 
 app = Flask(__name__)
 app.secret_key = 'DrKeoghRocks'
@@ -10,12 +12,24 @@ class DataStore():
     fileName = "not set"
     shipChanges = []
 
+log_file = 'logfile.log' 
+pst_timezone = pytz.timezone('US/Pacific')
+
+def log(append_str):
+    utc_now = datetime.now(timezone.utc)
+    pst_now = utc_now.replace(tzinfo=pytz.utc).astimezone(pst_timezone)
+
+    timestamp = pst_now.strftime('%H:%M')
+
+    with open(log_file, 'a') as f:
+        f.write(f'{timestamp} {append_str}\n')
 
 @app.route('/', methods = ["GET", "POST"])
 def Login():
     if request.method == "POST":
         user = request.form.get('user', 'Guest') 
         session['user'] = user 
+        log(user + "has logged in.")
         return redirect(url_for('Dashboard'))  
     return render_template('Login.html') 
 
@@ -154,6 +168,7 @@ def checkAction():
     if request.method == "POST":
         DataStore.selectOption = request.form['TypeAction']
         print(f"The action selected is: {DataStore.selectOption}", file=sys.stderr)
+        log(DataStore.selectOption + 'was selected by operator')
         return redirect(url_for('fileUpload'))
     return render_template('FileSelect.html')
 
