@@ -33,6 +33,49 @@
             <button type="submit" class="submit-button">Submit</button>
         </form>
     </div>
-</body>
 
+    <div class="comment-box">
+        <form action="{{ url_for('log_comment') }}" method="post">
+            <label for="comment">Add Comment:</label>
+            <textarea id="comment" name="comment" rows="4" placeholder="Write your comment here"></textarea>
+            <button type="button" id="submit-comment">Submit</button>
+        </form>
+        <div id="comment-feedback" style="color: green; display: none;">Comment logged successfully!</div>
+    </div>
+    
+    
+    <script>
+        document.getElementById('submit-comment').addEventListener('click', function() {
+            const comment = document.getElementById('comment').value; 
+            if (!comment.trim()) {
+                alert("Please enter a comment.");
+                return;
+            }
+        
+
+            fetch('{{ url_for("log_comment") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ comment: comment }),
+            })
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('comment').value = '';
+                    const feedback = document.getElementById('comment-feedback');
+                    feedback.style.display = 'block';
+                    setTimeout(() => feedback.style.display = 'none', 3000); 
+                } else {
+                    alert("Failed to log the comment. Please try again.");
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("An error occurred. Please try again.");
+            });
+        });
+        </script>
+</body>
+    
 </html>
