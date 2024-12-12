@@ -189,6 +189,18 @@ def fileUpload():
 
     return redirect(url_for('checkAction'))
 
+@app.route('/log_comment', methods=["POST"])
+def log_comment():
+    data = request.get_json()
+    comment = data.get("comment") if data else None
+    if comment:
+        log(f"User comment: {comment}")
+        print(f"Comment logged: {comment}", file=sys.stderr)
+        return jsonify({"status": "success", "message": "Comment logged successfully"})
+    return jsonify({"status": "error", "message": "No comment provided."}), 400
+
+
+
 @app.route('/Success', methods=["GET"])
 def success():
     return render_template('Success.html')
