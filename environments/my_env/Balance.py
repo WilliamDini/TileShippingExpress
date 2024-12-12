@@ -16,6 +16,11 @@
 # Containers is list of container coords
 
 # Gets coordinates of containers relative to their position on grid. So arr[0][0] = (8,1) on grid. Stores in list and returns.
+def printG(grid):
+    #print("Printing grid")
+    for i in range(len(grid)):
+        print(grid[i])
+
 def getGCoord(grid):
     coords = []
     for row in range(len(grid)):
@@ -46,36 +51,45 @@ def getCCoord(grid):
     return coords
 
 def canMove(grid, i, j):
+    #print("In canMove")
     # Start on heavier side
-    if i != 0 and grid[i-1][j] == 0:    # If there is no container directly above, then is movable
-        return True
+    if i == 0: return True
+    if grid[i-1][j] == 0: return True  # If there is no container directly above, then is movable
     return False
 
-def moveContainer(grid):
-    newPos = findOpenSpot(grid,)
-    print()
+def moveContainer(grid,side,containers,val,movements):   # Function to begin moving the ideal container once its movable
+    #print("In moveContainer")
+    newPos = findOpenSpot(grid,side)    # Get position to move to
+    #print("newpos",newPos)
+    temp = val
+    i = containers[val][0]
+    j = containers[val][1]
+    grid[i][j] = 0
+    grid[newPos[0]][newPos[1]] = temp
+    movements.append("("+str(i)+","+str(j)+") => ("+str(newPos[0])+","+str(newPos[1])+")")
+    return
 
-def findOpenSpot(grid, lhs, rhs, side):
+def findOpenSpot(grid,side):
+    #print("In findOpenSpot")
     Halfsies = int(len(grid[0])) // 2
     ShipGoalSide = []
-    print("lhs",lhs,"rhs:",rhs)
+    Side = False
+    #print("lhs",lhs,"rhs:",rhs)
     
     if side == 1: #Right Side is Lighter
         for row in grid: 
             ShipGoalSide.append(row[Halfsies:])
-            Side = True
+        Side = True
     else:                     #Left Side is Lighter
         for row in grid:
             ShipGoalSide.append(row[:Halfsies])
         
-    print(ShipGoalSide)
-    
-
+    #print("SGS",ShipGoalSide)
 
     for row in range(len(ShipGoalSide)):
-        print("row:",row)
-        for pos in ShipGoalSide[row]:
-            print("pos:",pos)
+        #print("row:",row)
+        for pos in range(len(ShipGoalSide[row])):
+            #print("pos:",pos)
             if ShipGoalSide[row][pos] == 0:
                 if (row == len(ShipGoalSide) - 1): # On Ground
                     if Side:    # If right side is lighter
@@ -88,63 +102,65 @@ def findOpenSpot(grid, lhs, rhs, side):
                         return [row, pos + len(ShipGoalSide[0])]
                     else:   # Left lighter side
                         [row, pos]
-    print("LAMAYOOOOOOOOO")
+    #print("LAMAYOOOOOOOOO")
     return []
 
-def moveBlocked(grid, i, j):    # WORKS NOWWWWWWWWWWWWWWWW 
-    col = j
-    row = 0
-    newCor = {} # 
-    newGrid = grid
-    print("row:",row,"col:",col)
-    while True:
-        cont = grid[row][col] # cont = container that is blocking and needs to be moved. Here cont is set to top of col
-        found = False
-        print("cont =",cont)
-        while cont == 0:    # Find first container to move that is blocking 
-            row = row + 1   # Go down in row, same col, to find first blocking container
-            print("HIIIII",row,"AA",col)
-            cont = grid[row][col]
-        if cont == grid[i][j]:
-            break
-        lCol = j-1
-        rCol = j+1
-        # print("rCol",rCol)
-        # print("lCol",lCol)
-        tempRow = len(grid)-1   # Set tempRow to bottom of the grid, or the last row
-        #print("temprow:", tempRow)
-        while (found is False):     # While a free spot hasnt been found
-            #print("HIIIIIIIII")
-            if lCol < 0 and rCol < 0:
-                print("No free spaces anywhere on ship!")
-                return {} 
-            if tempRow < 0:
-                tempRow = len(grid)-1
-                lCol = lCol-1
-                rCol = rCol+1
-            if lCol >= 0 and grid[tempRow][lCol] == 0:
-                newCor[cont] = tempRow,lCol
-                temp = grid[row][col]
-                grid[row][col] = 0
-                grid[tempRow][lCol] = temp
-                found = True
-                break
-            elif rCol >= 0 and grid[tempRow][rCol] == 0:
-              #  print("tempRow:",tempRow,"rCol:",rCol)
-                newCor[cont] = tempRow,rCol
-                temp = grid[row][col]
-                grid[row][col] = 0
-                grid[tempRow][rCol] = temp
-                found = True
-                break
-            else:
-                tempRow = tempRow - 1
-        row = row + 1
+def manhattanDis(coords1, coords2):
+    return (abs(coords1[0]- coords2[0]) + abs(coords1[1] - coords2[1]))
 
-        
-    return newCor                        
+def getOpenSpots(grid):
+    ret = []
+    for i in range(len(grid)):
+        for j in range(len(grid[i])):
+            if grid[i][j] == 0:
+                ret.append([i,j])
+    #print("ret:",ret)
+    return ret
+
+
+
+def moveBlocked(grid, i, j,movements):    # WORKS NOWWWWWWWWWWWWWWWW 
+    #print("IN moveBlocked")
+    #print("grid in moveBlocked",grid)
+    min = 10000
+    newX = 0
+    newY = 0
+    row = 0
+    col = j
+
+    while True:
+        open = getOpenSpots(grid)
+        while row < len(grid) and grid[row][col] == 0:  # Start at top of col with ideal container, go down until blocking container is found
+            row = row + 1
+        if grid[row][col] == grid[i][j]:  # Stop once ideal container is found in col
+            break   
+        #print("block container",grid[row][col])
+        for x in range(len(open)):
+            res = manhattanDis([open[x][0],open[x][1]],[row,col])
+            if res < min and validSpot(grid,open[x][0],open[x][1]):
+                #print("x = ",open[x][0],"y = ",open[x][1])
+                newX = open[x][0]
+                newY = open[x][1]
+                min = res
+        temp = grid[row][col]
+        grid[row][col] = 0
+        grid[newX][newY] = temp
+        movements.append("("+str(row)+","+str(col)+") => ("+str(newX)+","+str(newY)+")")
+        #print("grid during block:",grid)
+    return
             
+def validSpot(grid,i,j):
+    # Check if spot is on the ground
+    if i == len(grid):
+        return True
+    # Check if spot is above another container
+    if grid[i-1][j] != 0:
+        return True
+    return False    # Either spot is not on ground, or spot is floating (no container below it)
+
 def bestMove(grid, lhs, rhs, side):
+   # print("In bestMove")
+    #print("grid:",grid)
     min = 10000
     weight = 0
     for c in grid:
@@ -162,38 +178,46 @@ def bestMove(grid, lhs, rhs, side):
             if (abs(tempR - tempL)) < min:
                 min = abs(tempL - tempR)
                 weight = c
+   # print("weight:",weight)
     return weight
 
     # MAKE HASHMAP WITH WEIGHTS AND COORDS. USE WEIGHTS FROM BEST MOVE TO FIND COORDS OF BEST WEIGHT TO MOVE
 
 def balance(grid):
-    tempGrid = grid
+    print("Grid at start:")
+    printG(grid)
     containers = {}
-    gridCoords = getGCoord(grid)
+    #gridCoords = getGCoord(grid)
     codeCoords = getCCoord(grid)
     #print("grid coords:",gridCoords)
     #print("code coords:",codeCoords)
     
     if len(codeCoords) == 0:
+        print("Ship is empty!")
         return [], [], True   
     
     lhs, rhs, isBalanced = calculate_balance(grid)
 
-    print("lhs:",lhs,"rhs:",rhs)
     
     if isBalanced:
+        print("Ship is already balanced!")
         return None, True
     
-    Steps, ShipGrid = [], []
+    movements = []
     Half = len(grid[0]) // 2
 
     # print("HIIIIIII",coords)
     
     # print(lhsShip, rhsShip)
     
-    while (not isBalanced):
+    while (not isBalanced):      
+      #  print("In balance")
+        codeCoords = getCCoord(grid)  
         currContainer = []
         currVals = []
+        lhs, rhs, isBalanced = calculate_balance(grid)
+       # print("lhs:",lhs,"rrrhs:",rhs)
+       # print("GRID IN BALANCE:",grid)
         #Check Max Iteration
 
         #Pick Side to Start on
@@ -214,44 +238,50 @@ def balance(grid):
 
                     
 
-        # print("Code Coords:",codeCoords)
+       # print("Code Coords:",codeCoords)
         # print("Grid Coords:",gridCoords)
-        #print("Coords of containers on side that is greater weight:",currContainer)        
-        print("Container weights associated with the coords",currVals)
+        # print("Coords of containers on side that is greater weight:",currContainer)        
+        # print("Container weights associated with the coords",currVals)
+
         side = 0 if lhs > rhs else 1
+        # print("lhs:",lhs,"rhs:",rhs)
+        # print("side:",side)
         bestContainerWeight = bestMove(currVals,lhs,rhs,side)
-        print("Best container weight to move:",bestContainerWeight)
+        #print("Best container weight to move:",bestContainerWeight)
 
-        print(containers[bestContainerWeight])
+        # print(containers[bestContainerWeight])
 
-        block = {}
-        if (canMove(grid,containers[bestContainerWeight][0],containers[bestContainerWeight][1])):
-            print("Container can be moved!")
-            moving = findOpenSpot(grid,lhs,rhs,1)
-            print("moving:",moving)
-        else:
-            print("Container cannot be moved!")
-            block = moveBlocked(grid,containers[bestContainerWeight][0],containers[bestContainerWeight][1])
-            print("blocked:",block)
+        if (not canMove(grid,containers[bestContainerWeight][0],containers[bestContainerWeight][1])):        
+            # print("Container cannot be moved!")
+            #print("Grid before moveBlocked",grid)
+            moveBlocked(grid,containers[bestContainerWeight][0],containers[bestContainerWeight][1],movements)
+            print("Printing grid after moving blocked")
+            printG(grid)
+            
+            #print("Grid after moveBlocked",grid)
+        # print("Container can be moved!")
+        newSide = 0 if side == 1 else 1
+        moveContainer(grid,newSide,containers,bestContainerWeight,movements)
+        #print("moving:",moving)
         #print(currContainer)
         #print("HEREEEEEEEEEEEE",currVals)
         
         #Compute Cost of moving each container to the other side
-        
+        print("Printing grid after moving ideal container")
+        printG(grid)
         
         #SIFT???
         
         
         #Move the container
-        print("LOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOL:",grid)
         
         #Update Containers
-        isBalanced = True
+        lhs, rhs, isBalanced = calculate_balance(grid)
     
     #Update Ships and return with Steps
     
     
-    return 1 #Steps, ShipGrid, True
+    return movements #Steps, ShipGrid, True
     
     
 
@@ -291,10 +321,43 @@ ShipTwo = [
 coordOne = [[1,1], [1,2], [1,4], [2,1], [2,2]]
 coordTwo = [[1,1], [1,4], [2,1]] 
  
+# with open(r"C:\Users\varga\Documents\CS-179\project_repo\projo179\TileShippingExpress\environments\my_env") as f:
+#     print(f.read())
 
+from pathlib import Path
+
+PROJECT_DIR = Path(__file__).parent
+
+print("--- Reading in the entire file:")
+
+path = PROJECT_DIR / 'ShipCase1.txt'
+contents = path.read_text()
+
+# print(contents[0][18])
+
+# print("\n--- Looping over the lines:")
+print("HEHEHEH")
+lines = contents.splitlines()
+print(lines[2][18])
+temp1 = lines[len(lines)-1][1:3]
+temp2 = lines[len(lines)-1][4:6]
+xxx = int(temp1)
+yyy = int(temp2)
+print("x:",xxx," y:",yyy)
+# for line in lines:
+#     print(len(line))
+
+
+# file = open("C:\Users\varga\Documents\CS-179\project_repo\projo179\TileShippingExpress\environments\my_env","r")
+# print(file.read())
+# file.close()
 # 20, 30, 3, 7
 # L, R, B = 
-balance(ShipOne)
+#m = balance(ShipOne)
+
+# print("Movements to achieve balance")
+# for i in range(len(m)):
+#     print(m[i])
 # print("Left:", L," Right:", R, "Balance:", B)
 
 # L, R, B = 
