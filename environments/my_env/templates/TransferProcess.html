@@ -20,12 +20,34 @@
                 <p class="container-name">{{ container.name }}</p>
                 <p class="container-weight">{{ container.weight }}</p>
             {% endif %}
+            {% if container.action == "start" %}
+            <script>
+                document.getElementById("{{ container.id }}_{{ container.name }}").style.background = "rgba(12, 230, 102, 0.5)";
+                document.getElementById("{{ container.id }}_{{ container.name }}").style.border = "rgba(12, 230, 102, 1)";
+            </script>
+            {% endif %}
+
+            {% if container.action == "middle" %}
+            <script>
+                document.getElementById("{{ container.id }}_{{ container.name }}").style.background = "rgba(12, 230, 102, 0.5)";
+                document.getElementById("{{ container.id }}_{{ container.name }}").style.border = "rgba(12, 230, 102, 1)";
+            </script>
+            {% endif %}
+
+            {% if container.action == "end" %}
+            <script>
+                document.getElementById("{{ container.id }}_{{ container.name }}").style.background = "rgba(12, 230, 102, 0.5)";
+                document.getElementById("{{ container.id }}_{{ container.name }}").style.border = "rgba(12, 230, 102, 1)";
+            </script>
+            {% endif %}
+
         </div>
         {% endfor %}
     </div>
 
+    {% if action == "On" %}
     <div class="form-container">
-        <form action="{{ url_for('transfer_process', current=current_operation) }}" method="post">
+        <form action="{{ url_for('transfer_process_off', current=current_operation) }}" method="post">
             <label for="container-name">Container Name:</label>
             <input type="text" id="container-name" name="container_name" required>
             <label for="container-weight">Container Weight:</label>
@@ -33,6 +55,15 @@
             <button type="submit" class="submit-button">Submit</button>
         </form>
     </div>
+    {% endif %}
+
+    {% if action == "Off" %}
+    <div style="text-align: right;">
+        <form action="{{ url_for('transfer_process_off', current = current_operation) }}" method="post">
+            <button type="button">Continue</button>
+        </form>
+    </div>
+    {% endif %}
 </body>
 
 </html>

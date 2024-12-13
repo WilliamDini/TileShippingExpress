@@ -49,7 +49,7 @@ class Problem():
         rowArray = []
         index = 0
         for container in self.shipContainers:
-            print(container.name)
+            #rint(container.name)
             if(index < 11):
                 rowArray.append(container)
                 #print(len(rowArray))
@@ -84,10 +84,10 @@ class Problem():
     
     def printShipContNested(self):
         for array in self.shipContNested:
-            print("[", end = " ")
+            print("[", end = " ", file = sys.stderr)
             for element in array:
-                print(element.name[0:3] + str(array.index(element)), end = " ")
-            print("] index = " + str(self.shipContNested.index(array)) + "\n")
+                print(element.name[0:3] + str(array.index(element)), end = " ", file = sys.stderr)
+            print("] index = " + str(self.shipContNested.index(array)) + "\n", file = sys.stderr)
 
     def printPathContNested(self):
         for array in self.pathContNested:

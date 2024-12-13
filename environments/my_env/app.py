@@ -175,57 +175,112 @@ def transfer_process_off():
     #figure out how to render a come off path first,
     #with next button, to go to a come on path, keep
     #alternating, til operations is complete
-    
-    problem = Problem()
+    action = ""
+    contOffArr = []
+    if len(DataStore.shipChanges) > 0:
+        action = "Off"
+        for element in DataStore.shipChanges:
+            temp = element.split("_")
+            contOffArr.append(temp[1])
+        print(contOffArr, file = sys.stderr)
+
+    problem = Problem(DataStore.ship.containers)
     print(DataStore.shipChanges, file = sys.stderr)
+    problem.loadNestedContainers()
+    problem.printShipContNested()
+    
+    transfer = Transfer(problem.shipContNested, problem.shipContainers)
+    if len(contOffArr) > 0:
+        for element in problem.shipContainers:
+            if(element.name == contOffArr[0]):
+                container = element
+
+        pathArray = transfer.moveContainerOff(container, [])
+        newPathArray = []
+        for element in pathArray:
+            if type(element) != list:
+                newPathArray.append(element)
+    
+        print("path is: ", file = sys.stderr)
+        if(newPathArray == None):
+            print("No path available", file = sys.stderr)
+        else:
+            for element in newPathArray:
+                print(element, file = sys.stderr)
+
+        steps = problem.returnPathArray(newPathArray)
+        print(len(steps[0]), file = sys.stderr)
+        DataStore.ship.containers = steps[0]
+        ship_data = DataStore.ship.containers
+        contOffArr.pop(0)
+        DataStore.shipChanges.pop(0)
+        steps.pop(0)
 
     if request.method == "POST":
-        container_name = request.form.get('container_name')
-        container_weight = request.form.get('container_weight')
+        DataStore.ship.containers = steps[0]
+        ship_data = DataStore.ship.containers
+        steps.pop(0)
+        
+        print("in post continue", file = sys.stderr)
+        return render_template(
+            'TransferProcess.html',
+            ship=ship_data,
+            current_operation=current_operation,
+            total_operations=total_operations,
+            action = action
+        )
 
-        if not container_name or not container_weight:
-            return render_template(
-                'TransferProcess.html',
-                ship=ship_data,
-                current_operation=current_operation,
-                total_operations=total_operations,
-                error="Name and weight are required."
-            )
+    #if len(steps) > 0
+    # if request.method == "POST":
+    #     container_name = request.form.get('container_name')
+    #     container_weight = request.form.get('container_weight')
 
-        try:
-            container_weight = float(container_weight)  
-        except ValueError:
-            return render_template(
-                'TransferProcess.html',
-                ship=ship_data,
-                current_operation=current_operation,
-                total_operations=total_operations,
-                error="Weight must be a valid number."
-            )
+    #     if not container_name or not container_weight:
+    #         return render_template(
+    #             'TransferProcess.html',
+    #             ship=ship_data,
+    #             current_operation=current_operation,
+    #             total_operations=total_operations,
+    #             error="Name and weight are required."
+    #         )
 
-        if container_weight < 0:
-            print(f"Negative weight ({container_weight}) entered. Adjusting to 0.", file=sys.stderr)
-            container_weight = 0  
-        elif container_weight > 9999:
-            print(f"Weight ({container_weight}) exceeds 9999. Adjusting to 9999.", file=sys.stderr)
-            container_weight = 9999 
-        else:
-            container_weight = round(container_weight) 
+    #     try:
+    #         container_weight = float(container_weight)  
+    #     except ValueError:
+    #         return render_template(
+    #             'TransferProcess.html',
+    #             ship=ship_data,
+    #             current_operation=current_operation,
+    #             total_operations=total_operations,
+    #             error="Weight must be a valid number."
+    #         )
 
-        if current_operation <= len(ship_data):
-            ship_data[current_operation - 1].name = container_name
-            ship_data[current_operation - 1].weight = f"{int(container_weight):05}"  # Format as 5-digit number
+    #     if container_weight < 0:
+    #         print(f"Negative weight ({container_weight}) entered. Adjusting to 0.", file=sys.stderr)
+    #         container_weight = 0  
+    #     elif container_weight > 9999:
+    #         print(f"Weight ({container_weight}) exceeds 9999. Adjusting to 9999.", file=sys.stderr)
+    #         container_weight = 9999 
+    #     else:
+    #         container_weight = round(container_weight) 
 
-        current_operation += 1
-        if current_operation > total_operations:
-            return redirect(url_for('success'))
+    #     if current_operation <= len(ship_data):
+    #         ship_data[current_operation - 1].name = container_name
+    #         ship_data[current_operation - 1].weight = f"{int(container_weight):05}"  # Format as 5-digit number
+
+    #     current_operation += 1
+    #     if current_operation > total_operations:
+    #         return redirect(url_for('success'))
 
     return render_template(
         'TransferProcess.html',
         ship=ship_data,
         current_operation=current_operation,
-        total_operations=total_operations
+        total_operations=total_operations,
+        action = action
     )
+
+#def transfer_process_on():
 
 #IMPORTANT KEEP THIS TO HANDLE WHICH CONTAINERS SELECTED
 @app.route('/Transfer-process-changes', methods = ["GET", "POST"])
