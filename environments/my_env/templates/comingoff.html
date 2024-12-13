@@ -13,26 +13,21 @@
     <h1 style="text-align: center;">Coming Off</h1>
     <p style="text-align: center;">Which containers do you want to to unload?</p>
     <div class="grid-container">
-        {% for container in ship %}
-        <div id="{{ container.id }}_{{ container.name }}" onclick=changeBackgroundColor(id)>
-            {% if container.name != "NAN" %}
-            <script>
-                document.getElementById("{{ container.id }}_{{ container.name }}").style.background = "white";
-            </script>
-            {%if container.name != "UNUSED"%}
-            <p>{{ container.name }}</p>
-            <p>Weight: </p>
-            <p>{{ container.weight }}</p>
-            {% endif %}
-            {% else %}
-            <script>
-                document.getElementById("{{ container.id }}_{{ container.name }}").style.background = "black";
-            </script>
-            {% endif %}
-        </div>
-
-        {% endfor %}
+        {% if ship %}
+            {% for container in ship %}
+            <div id="{{ container.id }}_{{ container.name }}" 
+                 class="grid-item {% if container.name == 'NAN' %}black{% elif container.name == 'UNUSED' %}unused{% else %}active{% endif %}">
+                {% if container.name != 'UNUSED' and container.name != 'NAN' %}
+                    <p class="container-name">{{ container.name }}</p>
+                    <p class="container-weight">{{ container.weight }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>No containers available to display.</p>
+        {% endif %}
     </div>
+    
 
     <div style="text-align: center;">
         <button type="button" onclick=changeShipArray()>Submit Changes</button>
