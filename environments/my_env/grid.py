@@ -1,14 +1,18 @@
 # grid.py
 import array
 import sys
+from Transfer import *
 
 class Container():
-    def __init__(self, xPos, yPos, weight, name, id):
+    def __init__(self, xPos, yPos, weight, name, id, action, prevPath):
         self.xPos = xPos
         self.yPos = yPos
         self.weight = weight
         self.name = name
         self.id = id
+        self.action = action
+        self.prevPath = prevPath
+    
     def __getstate__(self):
         return self.__dict__
 
@@ -61,7 +65,7 @@ class Ship():
                     name = values[2]
                     
                     # Add container(structs) to containers array in ship class
-                    container = Container(x, y, weight, name, index)
+                    container = Container(x, y, weight, name, index, "x", False)
                     self.containers.append(container)
                     print(f"Loaded container: {container.name} at ({container.xPos}, {container.yPos}) with weight {container.weight}", file=sys.stderr)
                     index = index + 1
@@ -80,6 +84,11 @@ class Ship():
                                     + " YPOS:" + str(container.yPos) 
                                     + " Weight:" + container.weight
                                     + " Name:" + container.name, file=sys.stderr)
+
+newShip = Ship()
+newShip.loadGrid("ShipCase1.txt")
+problem = Problem(newShip.containers)
+#transfer = Transfer()
 
 #containerArray = []
 #newShip = Ship()
