@@ -201,7 +201,7 @@ def calcCost(grid,i,j,x,y,movs,r):    # i,j = curPos => x,y = goalPos
    # print("lab",r["7,2"])
     locname = r[label][0]
     locweight = r[label][1]
-    movs.append("("+str(i+1)+","+str(j+1)+" "+locweight+" "+locname)
+    movs.append(str(i)+" "+str(j)+" "+locweight+" "+locname)
     cost, tempx, tempy, nodes, count, movOff, movL, movR, offGrid = 0,i,j,{},1,False,False,False,0
     while True:   
         #print("THIS IS START")
@@ -320,21 +320,39 @@ def calcCost(grid,i,j,x,y,movs,r):    # i,j = curPos => x,y = goalPos
                 movs.append("(-1)"+","+str(tempy))
                 count = count + 1
         if offGrid != 4:
+            print("Tempx:",tempx,"tempy:",tempy)
+            if tempx == 0:
+                row_temp = len(grid)
+            else:
+                row_temp = len(grid) - tempx
+            print("adjusted = Tempx:",row_temp,"tempy:",tempy+1)
+            # print("aa",grid[i][j])
+            # print("i",i," j",j)
+            label = str(row_temp)+","+str(tempy+1)
+        # print("lab",r["7,2"])
             sorted_c = dict(sorted(c.items()))
            # print("aa",sorted_c)
             optVal = list(sorted_c.keys())[0]
             newx = c[optVal][0]
             newy = c[optVal][1]
-            label = str(tempx)+","+str(tempy)
+            #print("Tempx:",tempx,"tempy:",tempy)
+            # label = str(tempx)+","+str(tempy)
+            # for n in r.keys():
+            #     print(n)
             name = r[label][0]
             weight = r[label][1]
             del r[label]
             tempx = newx
             tempy = newy
-            label = str(tempx)+","+str(tempy)
+            if tempx == 0:
+                row_temp = len(grid)
+            else:
+                row_temp = len(grid) - tempx
+            label = str(row_temp)+","+str(tempy+1)
+            print("label:",label)
             r[label] = [name,weight]
 
-            movs.append("("+str(newx+1)+","+str(newy+1)+" "+weight+" "+name)
+            movs.append(str(newx)+" "+str(newy)+" "+weight+" "+name)
             cost = cost + 1
             count = count + 1
             offGrid = 0
@@ -518,7 +536,7 @@ def readFile():
     PROJECT_DIR = Path(__file__).parent
    # print("--- Reading in the entire file:")
 
-    path = PROJECT_DIR / 'ShipCase1.txt'
+    path = PROJECT_DIR / 'ShipCase2.txt'
     contents = path.read_text()
 
     #print(contents[0][18])
@@ -589,13 +607,13 @@ def getVals(grid,val):
     return grid[val][0], grid[val][1]
 
 r,g = readFile()
-#for a in g:
-    #print(a)
-#print(getVals(r,"01,03"))
+# for a in g:
+#     print(a)
+print("HIHIHIHIHIHI",getVals(r,"8,5"))
 
 z = getGCoord(g)
-#for m in z:
-   # print(m)
+for m in z:
+   print(m)
 
 m,c = balance(r,g)
 print("TOTAL COST IS:",c)
