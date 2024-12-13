@@ -6,36 +6,125 @@ from Transfer import Problem
 from datetime import datetime, timezone
 import pytz
 import os
+import pickle
+import atexit
+import time
+import threading
 
 app = Flask(__name__)
 app.secret_key = 'DrKeoghRocks'
+log_file = 'logfile.log'
+state_file = 'program_state.pkl'
+STATE_FILE = "test_state.pkl"
 class DataStore():
     selectOption = "not set"
     ship = Ship()
     fileName = "not set"
     shipChanges = []
-    #problem = Problem(ship.containers)
-    #transfer = Transfer(Problem.shipContNested, Problem.shipContainers)
-    #shipCntrOn = []
+    problem = None
+    transfer = None
+    manifest_content = None
 
-log_file = 'logfile.log' 
-pst_timezone = pytz.timezone('US/Pacific')
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        if "problem" in state:
+            state["problem"] = None
+        if "transfer" in state:
+            state["transfer"] = None
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
+state_lock = threading.Lock()
+
+def save_state():
+    state = {
+        "fileName": DataStore.fileName,
+        "containers": DataStore.ship.containers, 
+        "manifest_content": DataStore.manifest_content,
+    }
+    with open(state_file, 'wb') as f:
+        pickle.dump(state, f)
+    print(f"Autosave: {len(DataStore.ship.containers)} containers saved.", file=sys.stderr)
+
+def load_state():
+    with state_lock:
+        global DataStore
+        try:
+            with open(state_file, 'rb') as f:
+                state = pickle.load(f)
+                DataStore.fileName = state.get("fileName", "not set")
+                DataStore.manifest_content = state.get("manifest_content", None)
+                saved_containers = state.get("containers", [])
+
+                if saved_containers:
+                    DataStore.ship.containers = saved_containers
+                    print(f"State restored: {len(DataStore.ship.containers)} containers.", file=sys.stderr)
+                else:
+                    print("No containers found in saved state.", file=sys.stderr)
+        except Exception as e:
+            print(f"Error loading state: {e}", file=sys.stderr)
+
+def save_periodically():
+    save_state()
+
+def autosave():
+    while True:
+        time.sleep(15)
+        with state_lock:
+            save_state()
+
+autosave_thread = threading.Thread(target=autosave, daemon=True)
+autosave_thread.start()
+
+@app.before_request
+def initialize_app():
+    global DataStore
+    try:
+        if os.path.exists(STATE_FILE):
+            with open(STATE_FILE, "rb") as f:
+                DataStore.ship = pickle.load(f)
+            print(f"Ship state restored from {STATE_FILE}", file=sys.stderr)
+        else:
+            print("No saved ship state found, initializing with default ship.", file=sys.stderr)
+    except Exception as e:
+        print(f"Error restoring ship state: {e}", file=sys.stderr)
+
+def test_serialization(uploaded_file=None):
+    ship = Ship()
+    
+    if uploaded_file:
+        print(f"Loading grid from uploaded file: {uploaded_file}", file=sys.stderr)
+        ship.loadGrid(uploaded_file)
+        
+        with open(STATE_FILE, "wb") as f:
+            pickle.dump(ship, f)
+    elif os.path.exists(STATE_FILE):
+        with open(STATE_FILE, "rb") as f:
+            ship = pickle.load(f)
+        print("Restored ship state from saved file", file=sys.stderr)
+    else:
+        print("No state found, loading default ShipCase1.txt", file=sys.stderr)
+        ship.loadGrid("ShipCase1.txt")
+        with open(STATE_FILE, "wb") as f:
+            pickle.dump(ship, f)
+
+    print(f"Containers in restored ship: {len(ship.containers)}", file=sys.stderr)
+    ship.printContainers()
+    return ship
+
 
 def log(append_str):
-    utc_now = datetime.now(timezone.utc)
-    pst_now = utc_now.replace(tzinfo=pytz.utc).astimezone(pst_timezone)
-
-    timestamp = pst_now.strftime('%H:%M')
-
     with open(log_file, 'a') as f:
-        f.write(f'{timestamp} {append_str}\n')
+        f.write(datetime.now().strftime('%Y-%m-%d %H:%M') + ' ' + append_str + '\n')
 
 @app.route('/', methods = ["GET", "POST"])
 def Login():
     if request.method == "POST":
         user = request.form.get('user', 'Guest') 
         session['user'] = user 
-        log(user + "has logged in.")
+        log(f"{user} has logged in.")
         return redirect(url_for('Dashboard'))  
     return render_template('Login.html') 
 
@@ -302,10 +391,19 @@ def transferChanges():
 #@app.route('/Transfer-path', methods = ["GET", "POST"])
 #def path():
 #    return
+def Transfer():
+    return render_template('Transfer.html')
 
-@app.route('/Transfer-comingoff', methods = ["GET", "POST"])
+@app.route('/Transfer-comingoff', methods=["GET", "POST"])
 def comingoff():
-    return render_template('comingoff.html', fileUploaded = DataStore.fileName, ship = DataStore.ship.containers)
+    if not DataStore.ship.containers:
+        print("No containers available in DataStore.ship.containers.", file=sys.stderr)
+    else:
+        print(f"Containers available: {len(DataStore.ship.containers)}", file=sys.stderr)
+        for container in DataStore.ship.containers:
+            print(f"Container Info: {container.name} at ({container.xPos}, {container.yPos})", file=sys.stderr)
+    return render_template('comingoff.html', fileUploaded=DataStore.fileName, ship=DataStore.ship.containers)
+
 
 @app.route('/FileSelect', methods=['GET', 'POST'])
 def checkAction():
@@ -313,13 +411,14 @@ def checkAction():
     if request.method == "POST":
         DataStore.selectOption = request.form['TypeAction']
         print(f"The action selected is: {DataStore.selectOption}", file=sys.stderr)
-        log(DataStore.selectOption + 'was selected by operator')
+        log(DataStore.selectOption + ' was selected by operator.')
         return redirect(url_for('fileUpload'))
     return render_template('FileSelect.html')
 
 @app.route('/Balance', methods=["GET", "POST"])
 def Balance():
     if request.method == "POST":
+        log("Balance algorithm triggered.")
         print("Balance algorithm triggered", file=sys.stderr)
         return redirect(url_for('success')) 
     return render_template('Balance.html', ship=DataStore.ship.containers)
@@ -331,9 +430,27 @@ def fileUpload():
         file = request.files.get('file')
         if file:
             DataStore.fileName = file.filename
+            DataStore.manifest_content = file.read().decode('utf-8')
+            file.seek(0)
             file.save(file.filename)
             print(f"File {file.filename} uploaded successfully", file=sys.stderr)
-            DataStore.ship.loadGrid(DataStore.fileName)
+            log(file.filename + ' was uploaded')
+
+            try:
+                DataStore.ship.loadGrid(DataStore.fileName)
+                DataStore.ship.printContainers()
+
+                with open(STATE_FILE, "wb") as f:
+                    pickle.dump(DataStore.ship, f)
+
+                save_state()
+
+                print(f"Ship state saved to {STATE_FILE}", file=sys.stderr)
+                print(f"DataStore.fileName: {DataStore.fileName}", file=sys.stderr)
+            except Exception as e:
+                print(f"Error loading grid: {e}", file=sys.stderr)
+                return render_template('Error.html', error=f"Failed to load the grid: {e}")
+
         if DataStore.selectOption == "Balance":
             return redirect(url_for('Balance'))
         elif DataStore.selectOption == "Transfer":
@@ -341,6 +458,39 @@ def fileUpload():
 
     return redirect(url_for('checkAction'))
 
+
+
+
+@app.route('/log_comment', methods=["POST"])
+def log_comment():
+    data = request.get_json()
+    comment = data.get("comment") if data else None
+    if comment:
+        log(f"User comment: {comment}")
+        print(f"Comment logged: {comment}", file=sys.stderr)
+        return jsonify({"status": "success", "message": "Comment logged successfully"})
+    return jsonify({"status": "error", "message": "No comment provided."}), 400
+
+
+
 @app.route('/Success', methods=["GET"])
 def success():
     return render_template('Success.html')
+
+if __name__ == "__main__":
+    if os.path.exists(state_file):
+        try:
+            load_state()
+        except Exception as e:
+            print(f"Error loading state file: {e}", file=sys.stderr)
+    else:
+        print("State file not found. Starting with a clean state.", file=sys.stderr)
+
+    if not os.path.exists(log_file):
+        print("Log file not found. Creating a new log file.", file=sys.stderr)
+        with open(log_file, 'w') as f:
+            f.write("Log file initialized on " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "\n")
+    else:
+        print("Log file found. Appending to existing log file.", file=sys.stderr)
+
+    app.run(debug=True)
