@@ -2,8 +2,10 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify, s
 import sys
 from grid import *
 from Transfer import *
+from Transfer import Problem
 from datetime import datetime, timezone
 import pytz
+import os
 
 app = Flask(__name__)
 app.secret_key = 'DrKeoghRocks'
@@ -12,6 +14,8 @@ class DataStore():
     ship = Ship()
     fileName = "not set"
     shipChanges = []
+    #problem = Problem(ship.containers)
+    #transfer = Transfer(Problem.shipContNested, Problem.shipContainers)
     #shipCntrOn = []
 
 log_file = 'logfile.log' 
@@ -75,7 +79,8 @@ def loading():
         print(f"User wants to load {num_containers} containers", file=sys.stderr)
         DataStore.num_containers_to_load = num_containers
 
-        return redirect(url_for('transfer_process', current=1))
+        #changed redirect from "transfer_process"
+        return redirect(url_for('transfer_process_off', current=1))
 
     return render_template('loading.html')
 
@@ -104,6 +109,75 @@ def transfer_process():
     total_operations = num_containers_to_remove + num_containers_to_load
 
     ship_data = DataStore.ship.containers
+
+    #figure out how to render a come off path first,
+    #with next button, to go to a come on path, keep
+    #alternating, til operations is complete
+
+    if request.method == "POST":
+        container_name = request.form.get('container_name')
+        container_weight = request.form.get('container_weight')
+
+        if not container_name or not container_weight:
+            return render_template(
+                'TransferProcess.html',
+                ship=ship_data,
+                current_operation=current_operation,
+                total_operations=total_operations,
+                error="Name and weight are required."
+            )
+
+        try:
+            container_weight = float(container_weight)  
+        except ValueError:
+            return render_template(
+                'TransferProcess.html',
+                ship=ship_data,
+                current_operation=current_operation,
+                total_operations=total_operations,
+                error="Weight must be a valid number."
+            )
+
+        if container_weight < 0:
+            print(f"Negative weight ({container_weight}) entered. Adjusting to 0.", file=sys.stderr)
+            container_weight = 0  
+        elif container_weight > 9999:
+            print(f"Weight ({container_weight}) exceeds 9999. Adjusting to 9999.", file=sys.stderr)
+            container_weight = 9999 
+        else:
+            container_weight = round(container_weight) 
+
+        if current_operation <= len(ship_data):
+            ship_data[current_operation - 1].name = container_name
+            ship_data[current_operation - 1].weight = f"{int(container_weight):05}"  # Format as 5-digit number
+
+        current_operation += 1
+        if current_operation > total_operations:
+            return redirect(url_for('success'))
+
+    return render_template(
+        'TransferProcess.html',
+        ship=ship_data,
+        current_operation=current_operation,
+        total_operations=total_operations
+    )
+
+@app.route('/Transfer-process-Off', methods=["GET", "POST"])
+def transfer_process_off():
+    current_operation = request.args.get("current", 1, type=int)
+
+    num_containers_to_remove = len(DataStore.shipChanges)
+    num_containers_to_load = getattr(DataStore, 'num_containers_to_load', 0)
+    total_operations = num_containers_to_remove + num_containers_to_load
+
+    ship_data = DataStore.ship.containers
+
+    #figure out how to render a come off path first,
+    #with next button, to go to a come on path, keep
+    #alternating, til operations is complete
+    
+    problem = Problem()
+    print(DataStore.shipChanges, file = sys.stderr)
 
     if request.method == "POST":
         container_name = request.form.get('container_name')
@@ -173,9 +247,6 @@ def transferChanges():
 #@app.route('/Transfer-path', methods = ["GET", "POST"])
 #def path():
 #    return
-
-def Transfer():
-    return render_template('Transfer.html')
 
 @app.route('/Transfer-comingoff', methods = ["GET", "POST"])
 def comingoff():
