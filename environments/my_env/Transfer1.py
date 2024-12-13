@@ -49,7 +49,7 @@ class Problem():
         rowArray = []
         index = 0
         for container in self.shipContainers:
-            #rint(container.name)
+            print(container.name)
             if(index < 11):
                 rowArray.append(container)
                 #print(len(rowArray))
@@ -84,10 +84,10 @@ class Problem():
     
     def printShipContNested(self):
         for array in self.shipContNested:
-            print("[", end = " ", file = sys.stderr)
+            print("[", end = " ")
             for element in array:
-                print(element.name[0:3] + str(array.index(element)), end = " ", file = sys.stderr)
-            print("] index = " + str(self.shipContNested.index(array)) + "\n", file = sys.stderr)
+                print(element.name[0:3] + str(array.index(element)), end = " ")
+            print("] index = " + str(self.shipContNested.index(array)) + "\n")
 
     def printPathContNested(self):
         for array in self.pathContNested:
@@ -103,23 +103,23 @@ class Problem():
         print("in returnPathArray")
         arrayOfSteps = []
         arrayOfOps = []
-        for x in path:
-            temp = x.split()
+        for element in path:
+            temp = element.split()
             arrayOfSteps.append(temp)
             #print(temp)
         print(arrayOfSteps)
 
         temp = []
-        for i in arrayOfSteps:
-            if i[3] == "UNUSED":
-                temp.append(i)
+        for element in arrayOfSteps:
+            if element[3] == "UNUSED":
+                temp.append(element)
             else:
-                temp.append(i)
+                temp.append(element)
                 arrayOfOps.append(temp)
                 temp = []
         
         index = 0
-        for part in arrayOfOps:
+        for element in arrayOfOps:
             print("making new ship array")
             arrayOfOps[index] = arrayOfOps[index][::-1]
             print(arrayOfOps[index])
@@ -140,47 +140,35 @@ class Problem():
             #compare og shipContainers array with changes (start and end variables)
             #make new array set it to pathContainers array
             print(arrayOfOps[index])
-            #print("what is the fucking name")
+            print("what is the fucking name")
             print(self.pathContainers[0].name)
             tempPathContainers = copy.deepcopy(self.pathContainers[::-1])
             for step in arrayOfOps[index]:
                 #print(str(self.pathContainers[element.id].xPos) + " " + str(self.pathContainers[element.id].yPos))
                 #temp = []
-                
-                #clear pathContainers action = "x"
-                # for this in self.pathContainers:
-                #     self.pathContainers[this.id].action = "x"
-
-                # for thing in self.pathContainers:
-                #     print(thing.name + " " + str(thing.xPos) + " " + str(thing.yPos) + " " + thing.action)
-                
-                #print(step)
-                #print(len(arrayOfOps[index]))
+                print(step)
                 for element in tempPathContainers:
-                    # print(element.name + " " +  str(element.xPos) + " " + str(element.yPos))
                     #print(step)
                     checkedFirst = False
                     if(str(self.pathContainers[element.id].xPos) == step[0]) and (str(self.pathContainers[element.id].yPos) == step[1]):
-                        print("CHECK" + self.pathContainers[element.id].name + " " + str(self.pathContainers[element.id].xPos) + " " + str(self.pathContainers[element.id].yPos) + " " + self.pathContainers[element.id].action)
-                        print("FOUND" + step[3] + " " + step[0] + " " + step[1])
                         # print("found step in pathContainers array")
                         # print("checking start")
                         # print("current step")
                         # print(step)
                         if(step[4] == "start"):
-                            # print("in first")
-                            # print(element.id)
+                            print("in first")
+                            print(element.id)
                             temp = copy.deepcopy(self.pathContainers[element.id])
-                            #print(self.pathContainers[element.id].name)
+                            print(self.pathContainers[element.id].name)
                             self.pathContainers[element.id].weight = "00000"
                             self.pathContainers[element.id].name = "UNUSED"
                             self.pathContainers[element.id].action = "start"
                             self.pathContainers[element.id].prevPath = True
                             break
                         elif((step[4] == "end")):
-                            # print("in last")
-                            # print(temp.name)
-                            # print(temp.weight)
+                            print("in last")
+                            print(temp.name)
+                            print(temp.weight)
                             
                             self.pathContainers[element.id].weight = copy.deepcopy(temp.weight)
                             self.pathContainers[element.id].name = copy.deepcopy(temp.name)
@@ -188,31 +176,24 @@ class Problem():
                             self.pathContainers[element.id].prevPath = True
                             break
                         else:
-                            #print("in middle")
                             self.pathContainers[element.id].weight = copy.deepcopy(step[2])
                             self.pathContainers[element.id].name = copy.deepcopy(step[3])
-                            self.pathContainers[element.id].action = "middle"
+                            self.pathContainers[element.id].action = copy.deepcopy(step[4])
                             self.pathContainers[element.id].prevPath = True
                             break
                         #print(self.pathContainers[element.id].name)
-                # for element in 
-                # print(tempPathContainers)
-                #for thing in self.pathContainers:
-                #    print(thing.name + " " + str(thing.xPos) + " " + str(thing.yPos) + " " + thing.action)
-                #break
 
+                    else:
+                        self.pathContainers[element.id].prevPath = False
+            
             #save the pathContainersArray as an element in step array
-            tempPathContainers = copy.deepcopy(self.pathContainers)
-            steps.append(tempPathContainers)
+            tempStepsElement = copy.deepcopy(self.pathContainers)
+            steps.append(tempStepsElement)
             
             print("loading path and printing nested containers to check")
             self.loadPathNestedContainers()
             self.printPathContNested()
             self.tempShipContainers = copy.deepcopy(self.pathContainers)
-
-            for item in self.pathContainers:
-                #print(item.id)
-                self.pathContainers[item.id].action = "x"
             #self.pathContainers = copy.deepcopy(self.tempShipContainers)
             index = index + 1
             #break
@@ -281,9 +262,6 @@ class Transfer():
     #returns path (ARRAY OF STRINGS: x y containerweight containername) to place container on (start position to first available slot on left side)
     def moveContainerOn(self, containerWeight, containerName, path):
         print("Computing path for container: " + containerName + " - Coming On")
-
-        for element in self.shipContainers:
-            self.shipContainers[element.id].action = "x"
 
         self.path = path
         self.check = check
@@ -663,31 +641,30 @@ class Transfer():
         path.append(self.moveBlockingContainer(self.nestedArray[container.yPos - 2][container.xPos - 1], "above", path, self.check))
         return path
 
-# #testing ship coming off
-# newShip = Ship()
-# newShip.loadGrid("ShipCase4.txt")
-# newShip.printContainers()
-# Problem = Problem(newShip.containers)
-# Problem.loadNestedContainers()
-# Problem.printShipContNested()
-# Problem.printTempContainers()
+#testing ship coming off
+newShip = Ship()
+newShip.loadGrid("ShipCase4.txt")
+newShip.printContainers()
+Problem = Problem(newShip.containers)
+Problem.loadNestedContainers()
+Problem.printShipContNested()
+Problem.printTempContainers()
 
-# Transfer = Transfer(Problem.shipContNested , Problem.shipContainers)
-# for array in Problem.shipContNested:
-#     for element in array:
-#         if(element.name == "Cat"):
-#             container = element
-# pathArray = Transfer.moveContainerOff(container, [])
-# print(type(pathArray))
-# newPathArray = []
-# for element in pathArray:
-#     if type(element) != list:
-#         newPathArray.append(element)
+Transfer = Transfer(Problem.shipContNested , Problem.shipContainers)
+for array in Problem.shipContNested:
+    for element in array:
+        if(element.name == "Cat"):
+            container = element
+pathArray = Transfer.moveContainerOff(container, [])
+print(type(pathArray))
+newPathArray = []
+for element in pathArray:
+    if type(element) != list:
+        newPathArray.append(element)
 
-# #newPathArray = newPathArray[::-1]
-# print(newPathArray)
+newPathArray = newPathArray[::-1]
 
-# Problem.returnPathArray(newPathArray)
+Problem.returnPathArray(newPathArray)
 
 # print("path is: ")
 # if(newPathArray == None):
