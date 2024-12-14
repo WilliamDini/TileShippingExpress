@@ -1,4 +1,5 @@
 from pathlib import Path
+import copy as c
 
 # class Container():
 #     def __init__(self, xPos, yPos, weight, name, id):
@@ -58,20 +59,25 @@ def canMove(grid, i, j):
     if grid[i-1][j] == 0: return True  # If there is no container directly above, then is movable
     return False
 
-def moveContainer(grid,side,containers,val,movements,r):   # Function to begin moving the ideal container once its movable
-   # print("In moveContainer")
-    newPos = findOpenSpot(grid,side)    # Get position to move to
-    #print("newPos:",newPos)
-    min = 10000
-    newx = 0
-    newy = 0
-    for x in newPos:
-        res = manhattanDis(x,containers[val])
-        if res < min:
-            newx = x[0]
-            newy = x[1]
-            min = res
+def moveContainer(grid,side,containers,val,movements,r,sift=[-2,-2]):   # Function to begin moving the ideal container once its movable
+    newx,newy,cost=0,0,0
+    if sift[0] == -2:
+        newPos = findOpenSpot(grid,side)    # Get position to move to
+        #print("newPos:",newPos)
+        min = 10000
+        newx = 0
+        newy = 0
+        for x in newPos:
+            res = manhattanDis(x,containers[val])
+            if res < min:
+                newx = x[0]
+                newy = x[1]
+                min = res
+    else:
+        newx = sift[0]
+        newy = sift[1]
     cost = calcCost(grid,containers[val][0],containers[val][1],newx,newy,movements,r)
+    #print("cost 11111")
     temp = grid[containers[val][0]][containers[val][1]]
     grid[containers[val][0]][containers[val][1]] = 0
     grid[newx][newy] = temp
@@ -132,6 +138,147 @@ def getOpenSpots(grid):
     #print("ret:",ret)
     return ret
 
+def getGoals(grid):
+    res = []
+    for i in range(len(grid)-1,-1,-1):
+        seen = {}
+        for j in range(len(grid[0])):
+            if (len(grid[0])//2)-j-1 >= 0:
+                res.append([i,(len(grid[0])//2)-j-1])    # LEFT GOAL
+            if (len(grid[0])//2)+j < len(grid[0]):
+                res.append([i,(len(grid[0])//2)+j])    # LEFT GOAL
+            if (len(grid[0])//2)-j == 0 and (len(grid[0])//2)+j == 0:
+                break
+    return res
+
+def getContainers(grid):
+    containers = []
+
+    for row in range(len(grid)):
+        for col in range(len(grid[row])):
+            if grid[row][col] != 0 and grid[row][col] != -1:
+                containers.append([grid[row][col],[row,col]])
+    #print("ererrereer",containers)
+    return containers  
+
+def locateContainerSift(grid, containerID):
+    for row in range(len(grid)):
+        for col in range(len(grid[0])):
+            if grid[row][col] != 0 and grid[row][col] == containerID:
+                return [row, col]
+    return []
+
+def getAllGridSpotsSift(grid):
+    positions = list()
+    for row in range(len(grid)):
+        for col in range(len(grid[row])):
+            positions.append([row, col])
+    return positions
+
+def sift(grid,conts,movs,r):
+    cost = 0
+    cons = getContainers(grid)
+    goalSpots = getGoals(grid)  # All goals spots in from left to right
+    #print("THIS RIGHT HEREE HAHAHAHA")
+    # for g in goalSpots:
+    #     print(g)
+
+    # steps = []
+    # nearSpot = list()
+    sorted_weight = sorted(cons, reverse=True, key=lambda x: x[0]) # [Weight] = Position(x,y)
+    #print("sortedwwwww",sorted_weight)
+    weights = []
+    for w in sorted_weight:
+        weights.append(w[0])
+  #  print("Sift:", sorted_weight)
+   # print("All Coords:", positions)
+    # row = 0
+    # onleft=True
+    # goalCol = len(grid[0])//2
+    # goalRow = len(grid)
+    
+    # WHen moving containers that are blocking, you need to update their new location. In sorted_weight,
+    # go in for loop to find container that matches weight, if len is more than 1 (theres duplicate),
+    # check each coords until you find matching cords of blocked container that was just moved. once found
+    # update coords
+
+    for weight in weights:
+        cons = getContainers(grid)
+        #print("THIS WEIGHT",weight)
+        pos = [sorted_weight[0][1][0],sorted_weight[0][1][1]] # Get position of heaviest container
+        sorted_weight.pop(0)
+       # print("sirteweught after pop:",sorted_weight)
+        goalPos = goalSpots.pop(0)
+       # print("HI",pos)
+        if weight == grid[goalPos[0]][goalPos[1]] : # Check if it was already moved
+           # print("ALREADAY IN GOALLLL")
+            continue
+        else:   # Container has not been moved!!!L!
+            # Get goal pos
+          #  print("THE ELSE")
+          #  print("Goal pos!:",goalPos)
+            # check if blocked
+            if (grid[goalPos[0]][goalPos[1]]) != 0 and grid[goalPos[0]][goalPos[1]] != -1:
+                tempRow = 0
+                tempcon = grid[tempRow][goalPos[1]] # Container in col of container to move that is blocking goal spot
+                while tempRow < len(grid) and tempcon == 0:   # While temprow < 8 and we are in empty con
+                    tempRow += 1
+                    tempcon = grid[tempRow][goalPos[1]]
+              #      print("row in thiss",tempRow)
+                tempcon = grid[tempRow][goalPos[1]] # Container in col of container to move that is blocking goal spot
+             #   print("tempcon issss",tempcon)
+            #    print("goalpos[1] isss:",goalPos[1])
+            #    print("row issss",tempRow)
+                cost += siftBlock(grid,tempRow,goalPos[1],movs,r,sorted_weight)  # Potentially move container
+              #  print("THIS IS CUR POS x:",pos[0]," ",pos[1])
+              #  print("THIS IS GOAL POS x:",goalPos[0]," ",goalPos[1])
+                cost += calcCost(grid,pos[0],pos[1],goalPos[0],goalPos[1],movs,r)
+                
+              #  print("cost 2222",cost)
+                temp = grid[pos[0]][pos[1]] 
+                grid[pos[0]][pos[1]] = 0
+                grid[goalPos[0]][goalPos[1]] = temp
+            else:   # Not blocked so move container directly to goal spot
+                temp = grid[pos[0]][pos[1]] 
+                grid[pos[0]][pos[1]] = 0
+                grid[goalPos[0]][goalPos[1]] = temp
+      #  print("AFTER EACH ITER")
+        #printG(grid)
+        #EMPCOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO LOL
+    #printG(grid)
+    #print("cost 4444",cost)
+    return cost
+
+def siftBlock(grid,i,j,movs,r,sw): #i,j = loc of block container
+    open = getOpenSpots(grid)
+    newx,newy = 0,0
+    min = 100000
+    cost = 0
+    for x in range(len(open)):
+        res = manhattanDis([open[x][0],open[x][1]],[i,j])
+        #print("openx",open[x][0]," openy",open[x][1])
+        if res < min and validSpot(grid,open[x][0],open[x][1],i,j):
+            #print("valid is:",open[x][0]," y is",open[x][1])
+            #print("x = ",open[x][0],"y = ",open[x][1])
+            newx = open[x][0]
+            newy = open[x][1]
+            #print("newx",newX,"newy",newY)
+            min = res
+    for con in sw:
+        if con[0] == grid[i][j]:    # Found the value of blocked container to move
+            #print("i",i," j",j)
+            if con[1][0] == i and con[1][1] == j:   # Check if coords match the blocked container
+              #  print("dada",newx," dwdwwdwdw",newy)
+                con[1][0] = newx
+                con[1][1] = newy
+                break
+
+    temp = grid[i][j]
+    cost += calcCost(grid,i,j,newx,newy,movs,r)
+   # print("cost 333",cost)
+    grid[i][j] = 0
+    grid[newx][newy] = temp
+    return cost
 
 
 def moveBlocked(grid, i, j,movements,r):    # WORKS NOWWWWWWWWWWWWWWWW 
@@ -195,8 +342,9 @@ def calcCost(grid,i,j,x,y,movs,r):    # i,j = curPos => x,y = goalPos
         row_temp = len(grid)
     else:
         row_temp = len(grid) - i
-    # print("aa",grid[i][j])
-    # print("i",i," j",j)
+    ##print("aa",grid[i][j])
+    #print("i",i," j",j)
+    #print("rowtemp",row_temp," j+1",j+1)
     label = str(row_temp)+","+str(j+1)
    # print("lab",r["7,2"])
     locname = r[label][0]
@@ -320,12 +468,12 @@ def calcCost(grid,i,j,x,y,movs,r):    # i,j = curPos => x,y = goalPos
                 movs.append("(-1)"+","+str(tempy))
                 count = count + 1
         if offGrid != 4:
-            print("Tempx:",tempx,"tempy:",tempy)
+           # print("Tempx:",tempx,"tempy:",tempy)
             if tempx == 0:
                 row_temp = len(grid)
             else:
                 row_temp = len(grid) - tempx
-            print("adjusted = Tempx:",row_temp,"tempy:",tempy+1)
+           # print("adjusted = Tempx:",row_temp,"tempy:",tempy+1)
             # print("aa",grid[i][j])
             # print("i",i," j",j)
             label = str(row_temp)+","+str(tempy+1)
@@ -349,13 +497,14 @@ def calcCost(grid,i,j,x,y,movs,r):    # i,j = curPos => x,y = goalPos
             else:
                 row_temp = len(grid) - tempx
             label = str(row_temp)+","+str(tempy+1)
-            print("label:",label)
+            #print("label:",label)
             r[label] = [name,weight]
 
             movs.append(str(newx)+" "+str(newy)+" "+weight+" "+name)
             cost = cost + 1
             count = count + 1
             offGrid = 0
+   # print("cost 555555555",cost)
     return cost                                                    
 
 def bestMove(grid, lhs, rhs, side):
@@ -384,6 +533,10 @@ def bestMove(grid, lhs, rhs, side):
     # MAKE HASHMAP WITH WEIGHTS AND COORDS. USE WEIGHTS FROM BEST MOVE TO FIND COORDS OF BEST WEIGHT TO MOVE
 
 def balance(r,grid):
+    count = 0
+    gridcpy = c.deepcopy(grid)
+    contcpy = {}
+    rcpy = c.deepcopy(r)
   #  print("Grid at start:")
     #printG(grid)
     containers = {}
@@ -410,8 +563,15 @@ def balance(r,grid):
     # print("HIIIIIII",coords)
     
     # print(lhsShip, rhsShip)
-    
+    #print("ADADAAADADADA")
     while (not isBalanced):      
+        if count == 100:
+           # print("GRID BEFORE SIFT:")
+           # printG(gridcpy)
+            movements = []
+            print("Ship cannot be balanced. Begin Sift operation!")
+            cost = sift(gridcpy,contcpy,movements,rcpy)
+            return movements,cost
       #  print("In balance")
         codeCoords = getCCoord(grid)  
         currContainer = []
@@ -437,7 +597,8 @@ def balance(r,grid):
                     currVals.append(grid[Position[0]][Position[1]])
                     containers[grid[Position[0]][Position[1]]] = Position
 
-                    
+        if count == 0:
+            contcpy = containers
 
        # print("Code Coords:",codeCoords)
         # print("Grid Coords:",gridCoords)
@@ -487,6 +648,7 @@ def balance(r,grid):
         
         #Update Containers
         lhs, rhs, isBalanced = calculate_balance(grid)
+        count+=1
     
     #Update Ships and return with Steps
     
@@ -536,7 +698,7 @@ def readFile():
     PROJECT_DIR = Path(__file__).parent
    # print("--- Reading in the entire file:")
 
-    path = PROJECT_DIR / 'ShipCase2.txt'
+    path = PROJECT_DIR / 'ShipCase5.txt'
     contents = path.read_text()
 
     #print(contents[0][18])
@@ -568,7 +730,8 @@ def readFile():
         weight = l[10:15]
         res[loc] = [name,weight]
         #print(name)
-        #print(res[temp])
+       # print("loc",loc)
+       # print(res[loc])
         if weight == "00000" and name == "NAN":
             newList.append(-1)
         elif weight == "00000" and name != "NAN":
@@ -609,11 +772,11 @@ def getVals(grid,val):
 r,g = readFile()
 # for a in g:
 #     print(a)
-print("HIHIHIHIHIHI",getVals(r,"8,5"))
+# print("HIHIHIHIHIHI",getVals(r,"8,5"))
 
-z = getGCoord(g)
-for m in z:
-   print(m)
+# z = getGCoord(g)
+# for m in z:
+#    print(m)
 
 m,c = balance(r,g)
 print("TOTAL COST IS:",c)
@@ -621,6 +784,9 @@ print("TOTAL COST IS:",c)
 print("movements")
 for i in m:
     print(i)
+
+# g = getGoals(g)
+# print(g)
 
 # mmm = []
 # lp = calcCost(ShipOne,2,0,1,2,mmm)
