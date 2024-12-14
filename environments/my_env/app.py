@@ -4,8 +4,8 @@ from grid import *
 from Transfer import *
 from Transfer import Problem
 from datetime import datetime, timezone
-import pytz
 import os
+import pytz
 import pickle
 import atexit
 import time
@@ -112,29 +112,31 @@ def test_serialization(uploaded_file=None):
     ship = Ship()
     
     if uploaded_file:
+        # Load grid from the uploaded file
         print(f"Loading grid from uploaded file: {uploaded_file}", file=sys.stderr)
         ship.loadGrid(uploaded_file)
         
+        # Save the state to the file
         with open(STATE_FILE, "wb") as f:
             pickle.dump(ship, f)
+        print("Ship state saved after uploading the file.", file=sys.stderr)
     elif os.path.exists(STATE_FILE):
+        # Restore the ship's state from the saved file
         with open(STATE_FILE, "rb") as f:
             ship = pickle.load(f)
-        print("Restored ship state from saved file", file=sys.stderr)
+        print("Restored ship state from saved file.", file=sys.stderr)
     else:
-        print("No state found, loading default ShipCase1.txt", file=sys.stderr)
-        ship.loadGrid("ShipCase1.txt")
-        with open(STATE_FILE, "wb") as f:
-            pickle.dump(ship, f)
-
-    print(f"Containers in restored ship: {len(ship.containers)}", file=sys.stderr)
-    ship.printContainers()
+        # If no uploaded file or saved state, raise an error or handle accordingly
+        raise FileNotFoundError("No uploaded file or saved state found. Unable to initialize the ship.")
+    
     return ship
 
+pacific_tz = pytz.timezone('US/Pacific')
 
 def log(append_str):
+    pacific_time = datetime.now(pacific_tz).strftime('%Y-%m-%d %H:%M')
     with open(log_file, 'a') as f:
-        f.write(datetime.now().strftime('%Y-%m-%d %H:%M') + ' ' + append_str + '\n')
+        f.write(pacific_time + ' ' + append_str + '\n')
 
 @app.route('/', methods = ["GET", "POST"])
 def Login():
