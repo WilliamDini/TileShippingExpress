@@ -13,26 +13,21 @@
     <h1 style="text-align: center;">Coming Off</h1>
     <p style="text-align: center;">Which containers do you want to to unload?</p>
     <div class="grid-container">
-        {% for container in ship %}
-        <div id="{{ container.id }}_{{ container.name }}" onclick=changeBackgroundColor(id)>
-            {% if container.name != "NAN" %}
-            <script>
-                document.getElementById("{{ container.id }}_{{ container.name }}").style.background = "white";
-            </script>
-            {%if container.name != "UNUSED"%}
-            <p>{{ container.name }}</p>
-            <p>Weight: </p>
-            <p>{{ container.weight }}</p>
-            {% endif %}
-            {% else %}
-            <script>
-                document.getElementById("{{ container.id }}_{{ container.name }}").style.background = "black";
-            </script>
-            {% endif %}
-        </div>
-
-        {% endfor %}
+        {% if ship %}
+            {% for container in ship %}
+            <div id="{{ container.id }}_{{ container.name }}" 
+                 class="grid-item {% if container.name == 'NAN' %}black{% elif container.name == 'UNUSED' %}unused{% else %}active{% endif %}">
+                {% if container.name != 'UNUSED' and container.name != 'NAN' %}
+                    <p class="container-name">{{ container.name }}</p>
+                    <p class="container-weight">{{ container.weight }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>No containers available to display.</p>
+        {% endif %}
     </div>
+    
 
     <div style="text-align: center;">
         <button type="button" onclick=changeShipArray()>Submit Changes</button>
@@ -47,7 +42,49 @@
     <div class = "selectedIDs" id = "arrayContainer"></div>
 
     <script type="text/javascript" src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    
+    <div class="comment-box">
+        <form action="{{ url_for('log_comment') }}" method="post">
+            <label for="comment">Add Comment:</label>
+            <textarea id="comment" name="comment" rows="4" placeholder="Write your comment here"></textarea>
+            <button type="button" id="submit-comment">Submit</button>
+        </form>
+        <div id="comment-feedback" style="color: green; display: none;">Comment logged successfully!</div>
+    </div>
+    
+    
+    <script>
+        document.getElementById('submit-comment').addEventListener('click', function() {
+            const comment = document.getElementById('comment').value; 
+            if (!comment.trim()) {
+                alert("Please enter a comment.");
+                return;
+            }
+        
 
+            fetch('{{ url_for("log_comment") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ comment: comment }),
+            })
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('comment').value = '';
+                    const feedback = document.getElementById('comment-feedback');
+                    feedback.style.display = 'block';
+                    setTimeout(() => feedback.style.display = 'none', 3000); 
+                } else {
+                    alert("Failed to log the comment. Please try again.");
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("An error occurred. Please try again.");
+            });
+        });
+        </script>
 </body>
 
 </html>

@@ -6,3 +6,4 @@ environments\my_env\__pycache__\app.cpython-312.pyc
 environments\my_env\logfile.log
 environments\my_env\__pycache__
 environments\my_env\bin
+environments\my_env\program_state.pkl

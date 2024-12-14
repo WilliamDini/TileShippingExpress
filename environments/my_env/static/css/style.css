@@ -47,8 +47,8 @@
 
 .grid-container {
     display: grid;
-    grid-template-columns: repeat(12, 100px);
-    grid-template-rows: repeat(8, 100px);
+    grid-template-columns: repeat(12, 80px);
+    grid-template-rows: repeat(8, 80px);
     gap: 1px;
     padding: 15px;
     align-content: center;
@@ -101,4 +101,51 @@
     background-color: black;
     border: none; 
     color: white;
+}
+
+.comment-box {
+    position: absolute; 
+    bottom: 150px; 
+    right: 20px; 
+    background-color: #f9f9f9; 
+    border: 1px solid #ccc; 
+    border-radius: 8px; 
+    padding: 10px; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+    z-index: 1000; 
+    width: 300px; 
+}
+
+.comment-box textarea {
+    width: 100%; 
+    height: 80px; 
+    resize: none; 
+    border: 1px solid #ccc; 
+    border-radius: 4px; 
+    padding: 5px; 
+    font-size: 14px; 
+    box-sizing: border-box; 
+}
+
+
+.comment-box button {
+    margin-top: 10px; 
+    width: 100%; 
+    background-color: #007bff;
+    color: white;
+    border: none; 
+    padding: 8px;
+    border-radius: 4px; 
+    cursor: pointer;
+}
+
+.comment-box button:hover {
+    background-color: #0056b3; 
+}
+
+#comment-feedback {
+    margin-top: 10px; 
+    color: green; 
+    display: none; 
+    font-size: 14px; 
 }
