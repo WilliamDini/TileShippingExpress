@@ -18,12 +18,12 @@ function changeBackgroundColor(itemID) {
 }
 
 function checkSelectedIDs(itemID, action) {
-    if(action == 0) {
+    if (action == 0) {
         selectedIDs.push(itemID);
     } else {
-        for(let i = 0; i < selectedIDs.length; i++) {
-            if(selectedIDs[i] == itemID) {
-                selectedIDs.splice(i,1);
+        for (let i = 0; i < selectedIDs.length; i++) {
+            if (selectedIDs[i] == itemID) {
+                selectedIDs.splice(i, 1);
             }
         }
     }
@@ -31,7 +31,8 @@ function checkSelectedIDs(itemID, action) {
 }
 
 function displayArray() {
-    if(selectedIDs.length == 0) {
+    //alert("in displayArray");
+    if (selectedIDs.length == 0) {
         output = '<p>Selected Containers:</p>';
     } else {
         output = '<p>Selected Containers:</p>';
@@ -44,7 +45,7 @@ function displayArray() {
 }
 
 function changeShipArray() {
-
+    //alert("in changeShipArray");
     fetch('/Transfer-process-changes', {
         method: 'POST',
         headers: {
@@ -52,23 +53,23 @@ function changeShipArray() {
         },
         body: JSON.stringify(selectedIDs)
     })
-    .then(response => response.json())
-    .then(data => {
-        if(data.status == "success") {
-            alert("array processed successfully: " + data.array);
-        } else{
-            alert("Null Array processed successfully: " + data.message);
-        }
-    })
-    .catch(error => console.error('Error:', error));
+        .then(response => response.json())
+        .then(data => {
+            if (data.status == "success") {
+                alert("array processed successfully: " + data.array);
+            } else {
+                alert("Null Array processed successfully: " + data.message);
+            }
+        })
+        .catch(error => console.error('Error:', error));
 }
 
-function handleSubmittedContainer(){
+function handleSubmittedContainer() {
     let inputName = document.getElementById('containerName').value;
     let inputWeight = parseInt(document.getElementById('containerWeight').value);
     alert(inputWeight);
 
-    if(Number.isInteger(inputWeight) && inputWeight >= 0 && inputWeight < 100000 && inputName != "") {
+    if (Number.isInteger(inputWeight) && inputWeight >= 0 && inputWeight < 100000 && inputName != "") {
         data = {
             containerName: inputName,
             containerWeight: inputWeight
@@ -81,6 +82,38 @@ function handleSubmittedContainer(){
     }
 }
 
-if(window.location.pathname == "/Transfer-comingoff") {
+if (window.location.pathname == "/Transfer-comingoff") {
     window.onload = displayArray;
+}
+
+function handleCommentInput() {
+    const comment = document.getElementById('comment').value;
+    //alert(comment)
+    if (!comment.trim()) {
+        alert("Please enter a comment.");
+        return;
+    }
+
+
+    fetch('/log_comment', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ comment: comment }),
+    })
+    .then(response => {
+        if (response.ok) {
+            document.getElementById('comment').value = '';
+            const feedback = document.getElementById('comment-feedback');
+            feedback.style.display = 'block';
+            setTimeout(() => feedback.style.display = 'none', 3000);
+        } else {
+            alert("Failed to log the comment. Please try again.");
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert("An error occurred. Please try again.");
+    });
 }

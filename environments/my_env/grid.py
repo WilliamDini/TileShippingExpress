@@ -1,7 +1,7 @@
 # grid.py
 import array
 import sys
-from Transfer import *
+#from Transfer import *
 
 class Container():
     def __init__(self, xPos, yPos, weight, name, id, action, prevPath):
@@ -85,9 +85,9 @@ class Ship():
                                     + " Weight:" + container.weight
                                     + " Name:" + container.name, file=sys.stderr)
 
-newShip = Ship()
-newShip.loadGrid("ShipCase1.txt")
-problem = Problem(newShip.containers)
+# newShip = Ship()
+# newShip.loadGrid("ShipCase1.txt")
+# problem = Problem(newShip.containers)
 #transfer = Transfer()
 
 #containerArray = []
