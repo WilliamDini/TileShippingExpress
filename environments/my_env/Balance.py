@@ -284,61 +284,132 @@ def calcCost(grid, i, j, x, y, movs, r):
         row_temp = len(grid)
     else:
         row_temp = len(grid) - i
-    label = f"{row_temp},{j + 1}"  # Convert to grid label format
-
-    # Retrieve container details from metadata
-    if label not in r:
-        raise KeyError(f"Key {label} not found in metadata. Grid location: {i},{j}")
-    locname, locweight = r[label]
-
-    # Ensure locweight is an integer
-    if not isinstance(locweight, int):
-        raise ValueError(f"Invalid weight for {label}: {locweight}. Must be an integer.")
-
-    # Add movement to the list
-    movs.append(f"{i} {j} {str(locweight)} {locname}")
-
-    # Movement cost calculations
-    cost, tempx, tempy = 0, i, j
-    nodes, offGrid = {}, 0
+    label = str(row_temp)+","+str(j+1)
+    locname = r[label][0]
+    locweight = r[label][1]
+    movs.append(str(i)+" "+str(j)+" "+locweight+" "+locname)
+    cost, tempx, tempy, nodes, count, movOff, movL, movR, offGrid = 0,i,j,{},1,False,False,False,0
     while True:   
-        visited = f"{tempx},{tempy}"
-        nodes[visited] = 1
-
-        # If destination is reached, break
+        #print("THIS IS START")
+       # print("Offgrid is",offGrid)
+        visited = str(tempx) + "," + str(tempy)
+       # print("THIS IS VISITED:",visited)
+        nodes[visited]=1
+        visiting = ""
+       # print("STARTTTTTT")
+        #print("x:",tempx,"y:",tempy)
         if tempx == x and tempy == y:
             break
+        c = {} # Coords dict
+        # Check left cell
+        if offGrid == 0:
+            visiting = str(tempx)+","+str(tempy-1)
+            if (tempy-1 >= 0 and visiting not in nodes and grid[tempx][tempy-1] == 0):
+                heur = manhattanDis([tempx,tempy-1],[x,y])
+                if heur not in c:
+                    c[heur] = [tempx,tempy-1]
+            else: 
+                offGrid = offGrid+1
+            # Check right cell
+            visiting = str(tempx)+","+str(tempy+1)
+            if (tempy+1 < len(grid[0]) and visiting not in nodes and grid[tempx][tempy+1] == 0):
+                heur = manhattanDis([tempx,tempy+1],[x,y])
+                if heur not in c:
+                    c[heur] = [tempx,tempy+1]
+            else: 
+                offGrid = offGrid+1
+            # Check below cell
+            visiting = str(tempx+1)+","+str(tempy)
+            if (tempx+1 < len(grid) and visiting not in nodes and grid[tempx+1][tempy] == 0):
+                heur = manhattanDis([tempx+1,tempy],[x,y])
+                if heur not in c:
+                    c[heur] = [tempx+1,tempy]
+            else: 
+                offGrid = offGrid+1
+            # Check above cell
+            visiting = str(tempx-1)+","+str(tempy)
+            if (tempx-1 >= 0) and visiting not in nodes and grid[tempx-1][tempy] == 0:
+                heur = manhattanDis([tempx-1,tempy],[x,y])
+                if heur not in c:
+                    c[heur] = [tempx-1,tempy]
+            else: 
+                offGrid = offGrid+1
+        if offGrid == 4:
+            label = str(tempx) + "," + str(tempy)
+            if movOff is False: # First time going off grid so only going up
+                cost = cost + 1
+                movOff = True
+                if grid[tempx][tempy+1] != 0: movR = True
+                else: movL = True
+                movs.append("(-1)"+","+str(tempy)+" 00000 UNUSED")
+                count = count + 1
+            # Moved to position above first row that has an empty slot below it on first row of grid
+            elif grid[tempx][tempy] == 0 and label not in nodes:
+                movOff = False
+                offGrid = 0
+                cost = cost + 1
+                movs.append("(-1)"+","+str(tempy)+" 00000 UNUSED")
+                count = count + 1
+            # If still moving above grid and full col is to the right
+            elif movR is True and grid[tempx][tempy+1] != 0:
+                movR = True
+                movL = False
+                cost = cost + 1
+                movs.append("(-1)"+","+str(tempy+1)+" 00000 UNUSED")
+                tempy = tempy+1
+                count = count + 1
+            # If still moving above grid but space to right is 0!
+            elif grid[tempx][tempy+1] == 0:
+                movR = False
+                movOff = False
+                movL = False
+                count = count + 1
+                cost = cost + 2
+                movs.append("(-1)"+","+str(tempy+1)+" 00000 UNUSED")
+                tempy = tempy+1
+            # If still moving above grid but space to left is 0!
+            elif grid[tempx][tempy-1] == 0:
+                movR = False
+                movOff = False
+                movL = False
+                count = count + 1
+                cost = cost + 2
+                movs.append("(-1)"+","+str(tempy-1)+" 00000 UNUSED")
+            # If still moving above grid and full col is to the left
+            elif movL is True and grid[tempx][tempy-1] != 0:
+                movL = True
+                movR = False
+                tempy = tempy-1
+                cost = cost+1
+                movs.append("(-1)"+","+str(tempy))
+                count = count + 1
+        if offGrid != 4:
+            if tempx == 0:
+                row_temp = len(grid)
+            else:
+                row_temp = len(grid) - tempx
+            label = str(row_temp)+","+str(tempy+1)
+            sorted_c = dict(sorted(c.items()))
+            optVal = list(sorted_c.keys())[0]
+            newx = c[optVal][0]
+            newy = c[optVal][1]
+            name = r[label][0]
+            weight = r[label][1]
+            del r[label]
+            tempx = newx
+            tempy = newy
+            if tempx == 0:
+                row_temp = len(grid)
+            else:
+                row_temp = len(grid) - tempx
+            label = str(row_temp)+","+str(tempy+1)
+            r[label] = [name,weight]
 
-        # Neighbor search with heuristic
-        neighbors = {}
-        directions = [
-            (tempx, tempy - 1),  # Left
-            (tempx, tempy + 1),  # Right
-            (tempx + 1, tempy),  # Down
-            (tempx - 1, tempy),  # Up
-        ]
-        for dx, dy in directions:
-            if 0 <= dx < len(grid) and 0 <= dy < len(grid[0]):
-                if f"{dx},{dy}" not in nodes and grid[dx][dy] == 0:
-                    heur = manhattanDis([dx, dy], [x, y])
-                    neighbors[heur] = (dx, dy)
-
-        if neighbors:
-            # Move to the neighbor with the smallest heuristic value
-            best_move = min(neighbors.keys())
-            tempx, tempy = neighbors[best_move]
-            cost += 1  # Increment cost for each move
-            movs.append(f"{tempx} {tempy} {str(locweight)} {locname}")
-        else:
-            raise ValueError(f"Blocked container at {i},{j} could not reach {x},{y}.")
-
-    # Update metadata for the new position
-    new_label = f"{len(grid) - x if x != 0 else len(grid)},{y + 1}"
-    r[new_label] = [locname, locweight]
-    del r[label]  # Remove old position metadata
-
-    return cost
-                                       
+            movs.append(str(newx)+" "+str(newy)+" "+weight+" "+name)
+            cost = cost + 1
+            count = count + 1
+            offGrid = 0
+    return cost                                                    
 
 def bestMove(grid, lhs, rhs, side):
     min = 10000
@@ -360,25 +431,11 @@ def bestMove(grid, lhs, rhs, side):
                 weight = c
     return weight
 
-def balance(r, grid):
+def balance(r,grid):
     count = 0
-
-    # Safely copy the grid (list of lists)
-    gridcpy = [row[:] for row in grid]
-
-    # Validate and preprocess metadata `r`
-    try:
-        r_processed = {
-            key: [value[0], int(value[1])]  # Keep name as string, ensure weight is integer
-            for key, value in r.items()
-            if isinstance(value, list) and len(value) == 2
-        }
-    except ValueError as e:
-        raise ValueError(f"Error processing metadata: {r}. Ensure weights are valid integers.") from e
-
-    # Clone metadata
-    rcpy = {key: value[:] for key, value in r_processed.items()}  # Safe shallow copy
-
+    gridcpy = c.deepcopy(grid)
+    contcpy = {}
+    rcpy = c.deepcopy(r)
     containers = {}
     codeCoords = getCCoord(grid)
     cost = 0
@@ -391,13 +448,18 @@ def balance(r, grid):
 
     movements = []
     Half = len(grid[0]) // 2
-
-    while not isBalanced:
-        codeCoords = getCCoord(grid)
+    while (not isBalanced):      
+        if count == 100:
+            movements = []
+            print("Ship cannot be balanced. Begin Sift operation!")
+            cost = sift(gridcpy,contcpy,movements,rcpy)
+            return movements,cost
+        codeCoords = getCCoord(grid)  
         currContainer = []
         currVals = []
 
         lhs, rhs, isBalanced = calculate_balance(grid)
+        #Check Max Iteration
 
         if lhs > rhs:
             for Position in codeCoords:
@@ -407,34 +469,30 @@ def balance(r, grid):
                     containers[grid[Position[0]][Position[1]]] = Position
         else:
             for Position in codeCoords:
-                if (Position[1] >= Half) and (grid[Position[0]][Position[1]] > 0):
+                if ((Position[1] >= Half) and (grid[Position[0]][Position[1]] > 0)):
                     currContainer.append(Position)
                     currVals.append(grid[Position[0]][Position[1]])
                     containers[grid[Position[0]][Position[1]]] = Position
 
+        if count == 0:
+            contcpy = containers
+
         side = 0 if lhs > rhs else 1
-        bestContainerWeight = bestMove(currVals, lhs, rhs, side)
+        bestContainerWeight = bestMove(currVals,lhs,rhs,side)
 
-        if not canMove(grid, containers[bestContainerWeight][0], containers[bestContainerWeight][1]):
-            cost += moveBlocked(
-                grid,
-                containers[bestContainerWeight][0],
-                containers[bestContainerWeight][1],
-                movements,
-                rcpy,
-            )
+        if (not canMove(grid,containers[bestContainerWeight][0],containers[bestContainerWeight][1])):        
+            cost = cost + moveBlocked(grid,containers[bestContainerWeight][0],containers[bestContainerWeight][1],movements,r)
         newSide = 0 if side == 1 else 1
-        cost += moveContainer(grid, newSide, containers, bestContainerWeight, movements, rcpy)
-
+        cost = cost + moveContainer(grid,newSide,containers,bestContainerWeight,movements,r)
+        
+        # Check if balanced again
         lhs, rhs, isBalanced = calculate_balance(grid)
-        count += 1
-
-        if count > 100:
-            print("Ship cannot be balanced!")
-            break
-
-    return movements, cost
-
+        count+=1
+    
+    #Update Ships and return with Steps
+    return movements,cost #Steps, cost
+    
+    
 
 # Ship Grid (8, 12)
 def calculate_balance(grid):
@@ -471,7 +529,7 @@ ShipOne = [
 
 def readFile():
     PROJECT_DIR = Path(__file__).parent
-    path = PROJECT_DIR / 'ShipCase1 (1)(1).txt'
+    path = PROJECT_DIR / 'SilverQueen.txt'
     contents = path.read_text()
     res = {}
     grid = []

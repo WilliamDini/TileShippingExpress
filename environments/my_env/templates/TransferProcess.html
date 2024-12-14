@@ -9,9 +9,14 @@
 </head>
 
 <body>
-    <h1 class="page-title">Transfer Process</h1>
-    <p class="operation-status">Operation {{ current_operation }} of {{ total_operations }}</p>
 
+    <h1 class="page-title">Transfer Process</h1>
+    {% if current_operation == 1 %}
+    <p class="operation-status">Operation {{ current_operation }} of {{ total_operations }}</p>
+    {% endif %}
+    {% if current_operation > 1 %}
+    <p class="operation-status">Operation {{ current_operation }} of {{ total_operations }}</p>
+    {% endif %}
     <div class="grid-container">
         {% for container in ship %}
         <div id="{{ container.id }}_{{ container.name }}" 
@@ -45,9 +50,9 @@
         {% endfor %}
     </div>
 
-    {% if action == "On" %}
+    {% if action == "On" and prevAction != "On" and current_operation - 1 < total_operations %}
     <div class="form-container">
-        <form action="{{ url_for('transfer_process_off', current=current_operation) }}" method="post">
+        <form action="{{ url_for('transfer_process_init', current=current_operation, moveTo='On') }}" method="post">
             <label for="container-name">Container Name:</label>
             <input type="text" id="container-name" name="container_name" required>
             <label for="container-weight">Container Weight:</label>
@@ -57,11 +62,11 @@
     </div>
     {% endif %}
 
-    {% if action == "Off" %}
+    {% if action == "Off" or (current_operation - 1 == total_operations) %}
     <div style="text-align: right;">
-        <form action="{{ url_for('transfer_process_off', current = current_operation) }}" method="post">
-            <button type="button">Continue</button>
-        </form>
+        <!-- <form action="{{ url_for('transfer_process_init', current=current_operation, moveTo='On') }}" method="post"> -->
+        <button type="button" onclick="window.location.href='{{ url_for('transfer_process_init', current=current_operation, moveTo='Off') }}'">Continue</button>
+        <!-- </form> -->
     </div>
     {% endif %}
 
@@ -69,44 +74,13 @@
         <form action="{{ url_for('log_comment') }}" method="post">
             <label for="comment">Add Comment:</label>
             <textarea id="comment" name="comment" rows="4" placeholder="Write your comment here"></textarea>
-            <button type="button" id="submit-comment">Submit</button>
+            <button type="button" id="submit-comment" onclick=handleCommentInput()>Submit</button>
         </form>
         <div id="comment-feedback" style="color: green; display: none;">Comment logged successfully!</div>
     </div>
-    
-    
-    <script>
-        document.getElementById('submit-comment').addEventListener('click', function() {
-            const comment = document.getElementById('comment').value; 
-            if (!comment.trim()) {
-                alert("Please enter a comment.");
-                return;
-            }
         
-
-            fetch('{{ url_for("log_comment") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ comment: comment }),
-            })
-            .then(response => {
-                if (response.ok) {
-                    document.getElementById('comment').value = '';
-                    const feedback = document.getElementById('comment-feedback');
-                    feedback.style.display = 'block';
-                    setTimeout(() => feedback.style.display = 'none', 3000); 
-                } else {
-                    alert("Failed to log the comment. Please try again.");
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert("An error occurred. Please try again.");
-            });
-        });
-        </script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    
 </body>
     
 </html>
