@@ -4,6 +4,7 @@ from grid import *
 from Transfer import *
 from Transfer import Problem
 from datetime import datetime, timezone
+from Balance import balance
 import os
 import pytz
 import pickle
@@ -422,8 +423,86 @@ def Balance():
     if request.method == "POST":
         log("Balance algorithm triggered.")
         print("Balance algorithm triggered", file=sys.stderr)
-        return redirect(url_for('success')) 
+
+        # Construct the grid from the ship containers
+        ship_grid = []
+        metadata = {}
+        for container in DataStore.ship.containers:
+            row_idx = container.yPos - 1
+            col_idx = container.xPos - 1
+
+            # Ensure the grid has enough rows
+            while len(ship_grid) <= row_idx:
+                ship_grid.append([0] * 12)  # Initialize a 12-column row
+
+            # Populate the grid based on container properties
+            if container.name == "NAN":
+                ship_grid[row_idx][col_idx] = -1  # NAN is represented as -1
+            elif container.name == "UNUSED":
+                ship_grid[row_idx][col_idx] = 0  # UNUSED spaces are 0
+            else:
+                ship_grid[row_idx][col_idx] = int(container.weight)
+
+            # Populate the metadata for each grid location
+            grid_key = f"{len(ship_grid) - row_idx},{col_idx + 1}"
+            metadata[grid_key] = [container.name, int(container.weight)]
+
+        # Print the constructed grid for debugging
+        print("Constructed Grid:")
+        for row in ship_grid:
+            print(row)
+
+        print("Metadata:")
+        for key, value in metadata.items():
+            print(f"{key}: {value}")
+
+        # Perform the balance algorithm
+        try:
+            movements, cost = balance(metadata, ship_grid)
+
+            if not movements:  # Ship is already balanced or cannot be balanced
+                return render_template(
+                    'Balance.html',
+                    ship=DataStore.ship.containers,
+                    movements=[],
+                    cost=cost,
+                    message="The ship is already balanced!" if cost == 0 else "The ship cannot be balanced!"
+                )
+
+            # Apply movements to the ship containers
+            for move in movements:
+                start_row, start_col, start_weight, start_name = map(str.strip, move.split()[:4])
+                start_row, start_col = int(start_row), int(start_col)
+                end_row, end_col = map(int, move.split()[-2:])
+
+                # Clear the source position
+                for container in DataStore.ship.containers:
+                    if container.xPos - 1 == start_col and container.yPos - 1 == start_row:
+                        container.weight = "00000"
+                        container.name = "UNUSED"
+
+                # Update the destination position
+                for container in DataStore.ship.containers:
+                    if container.xPos - 1 == end_col and container.yPos - 1 == end_row:
+                        container.weight = f"{int(start_weight):05}"
+                        container.name = start_name
+
+            save_state()
+
+            return render_template(
+                'Balance.html',
+                ship=DataStore.ship.containers,
+                movements=movements,
+                cost=cost,
+                message="Balance algorithm completed successfully!"
+            )
+        except Exception as e:
+            print(f"Error during balance computation: {e}", file=sys.stderr)
+            return render_template('Error.html', error=f"Balance algorithm failed: {e}")
+
+    # Render the initial balance page
     return render_template('Balance.html', ship=DataStore.ship.containers)
+
 
 @app.route('/typeFile', methods=['GET', 'POST'])
 def fileUpload():
