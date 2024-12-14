@@ -66,7 +66,7 @@ class Problem():
         self.pathContNested.clear()
         rowArray = []
         index = 0
-        print("num containers= " + str(len(self.pathContainers)))
+        # print("num containers= " + str(len(self.pathContainers)))
         for container in self.pathContainers:
             #print(container.name)
             if(index < 11):
@@ -99,16 +99,16 @@ class Problem():
 
     #fix to create a different array of ship() containers for each step    
     def returnPathArray(self, path):
-        print(path)
+        # print(path)
         steps = []
-        print("in returnPathArray")
+        # print("in returnPathArray")
         arrayOfSteps = []
         arrayOfOps = []
         for x in path:
             temp = x.split()
             arrayOfSteps.append(temp)
             #print(temp)
-        print(arrayOfSteps)
+        # print(arrayOfSteps)
 
         temp = []
         for i in arrayOfSteps:
@@ -121,9 +121,9 @@ class Problem():
         
         index = 0
         for part in arrayOfOps:
-            print("making new ship array")
+            # print("making new ship array")
             arrayOfOps[index] = arrayOfOps[index][::-1]
-            print(arrayOfOps[index])
+            # print(arrayOfOps[index])
 
             #working on creating a new shipContNested array -> shipContainers array for each step
             #make two variables storing start and end position of each path
@@ -140,9 +140,9 @@ class Problem():
 
             #compare og shipContainers array with changes (start and end variables)
             #make new array set it to pathContainers array
-            print(arrayOfOps[index])
+            # print(arrayOfOps[index])
             #print("what is the fucking name")
-            print(self.pathContainers[0].name)
+            # print(self.pathContainers[0].name)
             tempPathContainers = copy.deepcopy(self.pathContainers[::-1])
             for step in arrayOfOps[index]:
                 #print(str(self.pathContainers[element.id].xPos) + " " + str(self.pathContainers[element.id].yPos))
@@ -162,8 +162,8 @@ class Problem():
                     #print(step)
                     checkedFirst = False
                     if(str(self.pathContainers[element.id].xPos) == step[0]) and (str(self.pathContainers[element.id].yPos) == step[1]):
-                        print("CHECK" + self.pathContainers[element.id].name + " " + str(self.pathContainers[element.id].xPos) + " " + str(self.pathContainers[element.id].yPos) + " " + self.pathContainers[element.id].action)
-                        print("FOUND" + step[3] + " " + step[0] + " " + step[1])
+                        # print("CHECK" + self.pathContainers[element.id].name + " " + str(self.pathContainers[element.id].xPos) + " " + str(self.pathContainers[element.id].yPos) + " " + self.pathContainers[element.id].action)
+                        # print("FOUND" + step[3] + " " + step[0] + " " + step[1])
                         # print("found step in pathContainers array")
                         # print("checking start")
                         # print("current step")
@@ -206,9 +206,9 @@ class Problem():
             tempPathContainers = copy.deepcopy(self.pathContainers)
             steps.append(tempPathContainers)
             
-            print("loading path and printing nested containers to check")
+            # print("loading path and printing nested containers to check")
             self.loadPathNestedContainers()
-            self.printPathContNested()
+            # self.printPathContNested()
             self.tempShipContainers = copy.deepcopy(self.pathContainers)
 
             for item in self.pathContainers:
@@ -217,7 +217,7 @@ class Problem():
             #self.pathContainers = copy.deepcopy(self.tempShipContainers)
             index = index + 1
             #break
-        print("length of steps need to take: " + str(len(steps)))
+        # print("length of steps need to take: " + str(len(steps)))
         return steps
 
     def returnShipArrays(self, nestedArray):
@@ -281,7 +281,7 @@ class Transfer():
     
     #returns path (ARRAY OF STRINGS: x y containerweight containername) to place container on (start position to first available slot on left side)
     def moveContainerOn(self, containerWeight, containerName, path):
-        print("Computing path for container: " + containerName + " - Coming On")
+        # print("Computing path for container: " + containerName + " - Coming On")
 
         # for element in self.shipContainers:
         #     self.shipContainers[element.id].action = "x"
@@ -293,7 +293,7 @@ class Transfer():
         GoalX = 0
         GoalY = 0
         openSpotFound = False
-        print("now here")
+        # print("now here")
         while(not openSpotFound):
             if(GoalX == 12):
                 path.append("ship is full")
@@ -309,7 +309,7 @@ class Transfer():
                     openSpotFound = True
                     break
             if openSpotFound != True:
-                print("in openSpotFound check")
+                # print("in openSpotFound check")
                 GoalX = GoalX + 1
             else:
                 #print("in openSpotFound else statement")
@@ -320,7 +320,7 @@ class Transfer():
         self.nestedArray[0][0].weight = copy.deepcopy(containerWeight)
 
         container = self.nestedArray[0][0]
-        print("This is the start container: " + container.name)
+        # print("This is the start container: " + container.name)
         #print("Container information: " + container.name + " " + container.weight)
 
         startNode = Node(container, 0, 0, "start")
@@ -354,7 +354,7 @@ class Transfer():
             
             #check if at the goal state (x = 1, y = 1)
             if(currNode.container.xPos == GoalX + 1) and (currNode.container.yPos == GoalY + 1):
-                print("in goal node check")
+                # print("in goal node check")
                 while currNode:
                     path.append(str(currNode.container.xPos) + " " + str(currNode.container.yPos) + " " + str(currNode.container.weight) + " " + str(currNode.container.name))
                     currNode = currNode.parent
@@ -369,19 +369,19 @@ class Transfer():
                 self.nestedArray[container.yPos - 1][container.xPos - 1].weight = "00000"
                 self.nestedArray[GoalY][GoalX].name = tempName
                 self.nestedArray[GoalY][GoalX].weight = tempWeight
-                print(self.nestedArray[GoalY][GoalX].name + " " + str(self.nestedArray[GoalY][GoalX].xPos) + " " + str(self.nestedArray[GoalY][GoalX].yPos))
+                # print(self.nestedArray[GoalY][GoalX].name + " " + str(self.nestedArray[GoalY][GoalX].xPos) + " " + str(self.nestedArray[GoalY][GoalX].yPos))
 
-                if(path != []):
-                    tempArray = []
-                    for element in path:
-                        if type(element) != list:
-                            tempArray.append(element)
-                    print(type(tempArray))
-                    for element in tempArray:
-                        print(type(element))
-                    if(len(tempArray) > 0):
-                        for element in tempArray:
-                            print(element)
+                # if(path != []):
+                #     tempArray = []
+                #     for element in path:
+                #         if type(element) != list:
+                #             tempArray.append(element)
+                #     # print(type(tempArray))
+                #     for element in tempArray:
+                #         # print(type(element))
+                #     if(len(tempArray) > 0):
+                #         for element in tempArray:
+                #             # print(element)
 
                 return path
 
@@ -438,7 +438,7 @@ class Transfer():
     
     #returns path (ARRAY OF STRINGS: x y containerweight containername) to take container off (start position to (x = 1, y = 8))
     def moveContainerOff(self, container, path):
-        print("Computing path for container: " + container.name + " - Coming Off")
+        # print("Computing path for container: " + container.name + " - Coming Off")
 
         startNode = Node(container, container.xPos - 1, container.yPos - 1, "start")
         self.path = path
@@ -485,7 +485,7 @@ class Transfer():
                 self.nestedArray[0][0].name = tempName
                 self.nestedArray[0][0].weight = tempWeight
 
-                print(len(path))
+                # print(len(path))
                 #for element in path:
                 #    print(element.container.name + " " + str(element.x) + " " + str(element.y))
 
@@ -558,7 +558,7 @@ class Transfer():
                 else:
                     GoalY = array[GoalX].yPos - 2
                     break
-        print("Goal State: x = " + str(GoalX) + ", y = " + str(GoalY))
+        # print("Goal State: x = " + str(GoalX) + ", y = " + str(GoalY))
 
         startNode = Node(container, container.xPos - 1, container.yPos - 1, "start")
         #path = []

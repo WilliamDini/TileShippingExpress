@@ -40,6 +40,7 @@ class DataStore():
     loadContinue = 0
     prevMove = 0
     moveOffLeft = 0
+    currOpAdded = False
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -290,27 +291,61 @@ def transfer_process_init():
     #action = ""
     #contOffArr = []
 
-    if(DataStore.prevAction == "On") and (DataStore.action == "Off"):
-        DataStore.action = "On"
+    if type(DataStore.current_operation) == str:
+        DataStore.current_operation = int(DataStore.current_operation)
 
-    print("current operation: " + DataStore.current_operation + " out of " + str(DataStore.total_operations))
-    if (int(DataStore.current_operation) == DataStore.total_operations and len(DataStore.steps) == 0 and DataStore.noLoadLeft == 1) or int(DataStore.current_operation) > DataStore.total_operations:
+    if len(DataStore.steps) > 0:
+        print("in beginning action = off")
+        DataStore.action = "Off"
+        #DataStore.steps.pop(0)
+    
+    if len(DataStore.steps) == 0 and DataStore.action == "Off" and DataStore.prevAction != "On":
+        print("change to off")
+        DataStore.prevAction = "Off"
+
+    if len(DataStore.steps) == 0 and DataStore.num_containers_to_load == 0 and DataStore.prevAction != "Off":
+        DataStore.currOpAdded = False
+
+    print("steps length: " + str(len(DataStore.steps)))
+    print(DataStore.currOpAdded)
+    # if len(DataStore.steps) == 0 and DataStore.prevAction == "Off" and moveTo == "On":
+    if len(DataStore.steps) == 0 and DataStore.currOpAdded == False and DataStore.iteration > 1:
+        # if type(DataStore.current_operation) == str:
+        #     DataStore.current_operation = int(DataStore.current_operation)
+        print("add one to current op when no steps")
+        DataStore.currOpAdded = True
+        DataStore.current_operation += 1
+
+    # if(DataStore.prevAction == "On") and (DataStore.action == "Off"):
+    #     DataStore.action = "On"
+
+    print("current operation: " + str(DataStore.current_operation) + " out of " + str(DataStore.total_operations))
+    if (DataStore.current_operation == DataStore.total_operations and len(DataStore.steps) == 0 and DataStore.num_containers_to_load == 0 and DataStore.num_containers_to_remove == 0) or DataStore.current_operation > DataStore.total_operations:
         return redirect(url_for('success'))
     elif DataStore.total_operations == 0:
         return redirect(url_for('success'))   
-    DataStore.current_operation = int(DataStore.current_operation)
+    # DataStore.current_operation = int(DataStore.current_operation)
 
     if DataStore.num_containers_to_load == 0:
         print("in no load left")
         DataStore.noLoadLeft = 1
+        moveTo = "Off"
 
     print("moveTo " + moveTo)
     print("action " + DataStore.action)
     print(DataStore.num_containers_to_load)
-    
+    print(DataStore.prevAction)
+    print("num steps: " + str(len(DataStore.steps)))
+    print("contOffAr: " + str(len(DataStore.contOffArr)))
+
     #p sure this checks if the remaining steps are putting on cont
-    if moveTo == "Off" and DataStore.action == "On" and DataStore.num_containers_to_load > 0 and DataStore.contOffArr == 0:
+    if moveTo == "Off" and DataStore.action == "Off" and DataStore.num_containers_to_load > 0 and len(DataStore.contOffArr) == 0 and DataStore.prevAction == "On":
         print("in this")
+        moveTo = "On"
+
+    #check if steps = 0, and change if there are containers coming on
+    if len(DataStore.steps) == 0 and DataStore.num_containers_to_load > 0 and DataStore.iteration > 1 and DataStore.prevAction == "Off":
+        print("there are no steps, changing to coming on")
         moveTo = "On"
 
     #check remaining steps are taking off cont
@@ -325,6 +360,8 @@ def transfer_process_init():
         if DataStore.loadContinue == 1:
             DataStore.num_containers_to_load -= 1
         DataStore.prevMove = 0
+        if(DataStore.prevAction == "On"):
+            DataStore.prevAction = ""
         return transfer_process_on()
 
     print(len(DataStore.steps))
@@ -356,7 +393,7 @@ def transfer_process_init():
         
         if len(DataStore.tempContainerArray) > 0:
             for i in range(len(DataStore.tempContainerArray)):
-                if DataStore.tempContainerArray[i].xPos == 1 and DataStore.tempContainerArray[i].yPos == 1:
+                if DataStore.tempContainerArray[i].xPos == 1 and DataStore.tempContainerArray[i].yPos == 1 and DataStore.tempContainerArray[i].name != "UNUSED":
                     print("found container: " + DataStore.tempContainerArray[i].name)
                     DataStore.tempContainerArray[i].name = "UNUSED"
                     DataStore.tempContainerArray[i].weight = "00000"
@@ -389,9 +426,10 @@ def transfer_process_init():
         DataStore.problem.loadNestedContainers()
         DataStore.problem.printShipContNested()
         DataStore.transfer = Transfer(DataStore.problem.shipContNested, DataStore.problem.shipContainers)
-    else:
-        if len(DataStore.steps) == 0:
-            DataStore.current_operation += 1
+    # else:
+    #     if len(DataStore.steps) == 0 and DataStore.prevAction != "On":
+    #         print("adding to current operation from process init")
+    #         DataStore.current_operation += 1
 
     if len(DataStore.contOffArr) > 0:
         for element in DataStore.problem.shipContainers:
@@ -399,9 +437,9 @@ def transfer_process_init():
                 container = element
 
         pathArray = []
-        if DataStore.iteration > 0:
+        if DataStore.iteration > 1:
             for i in range(len(DataStore.tempContainerArray)):
-                if DataStore.tempContainerArray[i].xPos == 1 and DataStore.tempContainerArray[i].yPos == 1:
+                if DataStore.tempContainerArray[i].xPos == 1 and DataStore.tempContainerArray[i].yPos == 1 and DataStore.tempContainerArray[i].name != "UNUSED":
                     print("found container: " + DataStore.tempContainerArray[i].name)
                     DataStore.tempContainerArray[i].name = "UNUSED"
                     DataStore.tempContainerArray[i].weight = "00000"
@@ -439,8 +477,9 @@ def transfer_process_init():
         else:
             print(len(DataStore.steps), file = sys.stderr)
             DataStore.tempContainerArray = copy.deepcopy(DataStore.steps[0])
+            print("in else pop")
         #ship_data = DataStore.ship.containers
-            #DataStore.steps.pop(0)
+            DataStore.steps.pop(0)
         print("length of steps: " + str(len(DataStore.steps)))
         DataStore.contOffArr.pop(0)
         print("contArray: ")
@@ -450,14 +489,24 @@ def transfer_process_init():
         if DataStore.num_containers_to_remove > 0 and DataStore.num_containers_to_load == 0:
             DataStore.moveOffLeft = 1
 
-    if(DataStore.iteration > 1):
+    if(DataStore.iteration > 1) or len(DataStore.steps) > 0:
         DataStore.action = "Off"
     print("action: " + DataStore.action)
 
-    if len(DataStore.steps) == 0:
-        DataStore.action = "On"
+    # if len(DataStore.steps) == 0 and DataStore.prevAction == "Off":
+    #     DataStore.action = "On"
 
-    DataStore.prevAction = "Off"
+    if DataStore.iteration == 1 or len(DataStore.steps) > 0:
+        #print("in pop step[0]")
+        # DataStore.steps.pop(0)
+        DataStore.prevAction = ""
+    
+    if len(DataStore.steps) == 0:
+        print("in datastore steps = 0")
+        DataStore.prevAction = "Off"
+        DataStore.currOpAdded = True
+        # DataStore.current_operation += 1
+    
     DataStore.iteration += 1
     return render_template(
             'TransferProcess.html',
@@ -591,16 +640,25 @@ def transfer_process_on():
         if len(DataStore.steps)> 0:
             DataStore.steps.pop(0)
         
-        DataStore.current_operation = int(DataStore.current_operation)
-        DataStore.current_operation += 1
+        # DataStore.current_operation = int(DataStore.current_operation)
+        print("adding to current operation from process on")
+        # if DataStore.current_operation <= DataStore.total_operations:
+        #     DataStore.current_operation += 1
         # if DataStore.current_operation > DataStore.total_operations:
         #     return redirect(url_for('success'))
+
+        # if DataStore.current_operation > 1 and DataStore.current_operation  < DataStore.total_operations:
+        #     print("add 1 to current op in process on")
+        #     DataStore.current_operation += 1
+        # else:
+        #     tempCurrOp = 1
 
         # DataStore.num_containers_to_load -= 1
         DataStore.loadContinue = 1
         DataStore.iteration += 1
         DataStore.action = "Off"
         DataStore.prevAction = "On"
+        DataStore.currOpAdded = False
         print("at submit, choice: action-" + DataStore.action + " prev-" + DataStore.prevAction)
         return render_template(
             'TransferProcess.html',
@@ -614,7 +672,8 @@ def transfer_process_on():
         )
     DataStore.loadContinue = 0
     DataStore.action = "On"
-    DataStore.prevAction = "Off"
+    # if DataStore.prevAction == "Off"
+    #     DataStore.prevAction = "On"
     return render_template(
         'TransferProcess.html',
         ship=DataStore.tempContainerArray,
@@ -635,13 +694,18 @@ def transfer_process_off_cont():
         print("pop step from off cont")
         DataStore.steps.pop(0)
         print("remaining steps: " + str(len(DataStore.steps)), file = sys.stderr)
+        if len(DataStore.steps) == 0:
+            DataStore.currOpAdded= False
     else:
-        DataStore.action = "On"
-        DataStore.current_operation = DataStore.current_operation + 1
-        # for x in DataStore.tempContainerArray:
-        #     print(x.name + " " + str(x.xPos) + " " + str(x.yPos))
+        print("changing currOp to false in off cont")
+        DataStore.currOpAdded = False
+    #     #DataStore.action = "On"
+    #     print("adding 1 to current op in come off")
+    #     DataStore.current_operation = DataStore.current_operation + 1
+    #     # for x in DataStore.tempContainerArray:
+    #     #     print(x.name + " " + str(x.xPos) + " " + str(x.yPos))
 
-    DataStore.prevAction = "Off"
+    DataStore.prevAction = ""
     return render_template(
             'TransferProcess.html',
             ship=DataStore.tempContainerArray,
@@ -772,3 +836,6 @@ if __name__ == "__main__":
         print("Log file found. Appending to existing log file.", file=sys.stderr)
 
     app.run(debug=True)
+
+# PLACE LINE 60 IN TransferProcess.html
+# <!-- {% if action == "Off" or (action == "Off" and current_operation == total_operations) or (action == "On" and numLoad == 0) or (action == "On" and current_operation == total_operations) %} -->
