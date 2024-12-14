@@ -45,7 +45,7 @@
         {% endfor %}
     </div>
 
-    {% if action == "On" %}
+    {% if action == "On" and prevAction != "On" %}
     <div class="form-container">
         <form action="{{ url_for('transfer_process_init', current=current_operation, moveTo='On') }}" method="post">
             <label for="container-name">Container Name:</label>
@@ -57,7 +57,7 @@
     </div>
     {% endif %}
 
-    {% if action == "Off" %}
+    {% if action == "Off" or (action == "Off" and current_operation == total_operations) or (action == "On" and numLoad == 0) %}
     <div style="text-align: right;">
         <!-- <form action="{{ url_for('transfer_process_init', current=current_operation, moveTo='On') }}" method="post"> -->
         <button type="button" onclick="window.location.href='{{ url_for('transfer_process_init', current=current_operation, moveTo='Off') }}'">Continue</button>

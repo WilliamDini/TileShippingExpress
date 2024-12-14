@@ -46,6 +46,7 @@ class Problem():
         self.pathContainers = copy.deepcopy(self.shipContainers)
 
     def loadNestedContainers(self):
+        self.shipContNested.clear()
         rowArray = []
         index = 0
         for container in self.shipContainers:
@@ -93,7 +94,7 @@ class Problem():
         for array in self.pathContNested:
             print("[", end = " ")
             for element in array:
-                print(element.name[0:3] + str(array.index(element)) + element.action[0], end = " ")
+                print(element.name[0:3] + str(array.index(element)) + element.action[0] + str(element.id), end = " ")
             print("] index = " + str(self.pathContNested.index(array)) + "\n")
 
     #fix to create a different array of ship() containers for each step    
@@ -282,8 +283,8 @@ class Transfer():
     def moveContainerOn(self, containerWeight, containerName, path):
         print("Computing path for container: " + containerName + " - Coming On")
 
-        for element in self.shipContainers:
-            self.shipContainers[element.id].action = "x"
+        # for element in self.shipContainers:
+        #     self.shipContainers[element.id].action = "x"
 
         self.path = path
         self.check = check
@@ -292,6 +293,7 @@ class Transfer():
         GoalX = 0
         GoalY = 0
         openSpotFound = False
+        print("now here")
         while(not openSpotFound):
             if(GoalX == 12):
                 path.append("ship is full")
@@ -307,17 +309,18 @@ class Transfer():
                     openSpotFound = True
                     break
             if openSpotFound != True:
-                #print("in openSpotFound check")
+                print("in openSpotFound check")
                 GoalX = GoalX + 1
             else:
                 #print("in openSpotFound else statement")
                 break
         #print("Goal State: x = " + str(GoalX) + ", y = " + str(GoalY))
 
-        self.nestedArray[0][0].name = containerName
-        self.nestedArray[0][0].weight = containerWeight
+        self.nestedArray[0][0].name = copy.deepcopy(containerName)
+        self.nestedArray[0][0].weight = copy.deepcopy(containerWeight)
 
         container = self.nestedArray[0][0]
+        print("This is the start container: " + container.name)
         #print("Container information: " + container.name + " " + container.weight)
 
         startNode = Node(container, 0, 0, "start")
@@ -351,7 +354,7 @@ class Transfer():
             
             #check if at the goal state (x = 1, y = 1)
             if(currNode.container.xPos == GoalX + 1) and (currNode.container.yPos == GoalY + 1):
-                #rint("in goal node check")
+                print("in goal node check")
                 while currNode:
                     path.append(str(currNode.container.xPos) + " " + str(currNode.container.yPos) + " " + str(currNode.container.weight) + " " + str(currNode.container.name))
                     currNode = currNode.parent
@@ -366,15 +369,19 @@ class Transfer():
                 self.nestedArray[container.yPos - 1][container.xPos - 1].weight = "00000"
                 self.nestedArray[GoalY][GoalX].name = tempName
                 self.nestedArray[GoalY][GoalX].weight = tempWeight
-                #print(self.nestedArray[GoalY][GoalX].name + " " + str(self.nestedArray[GoalY][GoalX].xPos) + " " + str(self.nestedArray[GoalY][GoalX].yPos))
+                print(self.nestedArray[GoalY][GoalX].name + " " + str(self.nestedArray[GoalY][GoalX].xPos) + " " + str(self.nestedArray[GoalY][GoalX].yPos))
 
                 if(path != []):
                     tempArray = []
                     for element in path:
                         if type(element) != list:
                             tempArray.append(element)
-                    #for element in tempArray:
-                    #    print(element.name + " " + str(element.xPos) + " " + str(element.yPos))
+                    print(type(tempArray))
+                    for element in tempArray:
+                        print(type(element))
+                    if(len(tempArray) > 0):
+                        for element in tempArray:
+                            print(element)
 
                 return path
 
