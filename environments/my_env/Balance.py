@@ -1,6 +1,6 @@
 from pathlib import Path
 import copy as c
-import json
+
 # class Container():
 #     def __init__(self, xPos, yPos, weight, name, id):
 #         self.xPos = xPos
@@ -279,7 +279,7 @@ def validSpot(grid,i,j,r,c):
         return True
     return False    # Either spot is not on ground, or spot is floating (no container below it)
 
-def calcCost(grid, i, j, x, y, movs, r):  
+def calcCost(grid,i,j,x,y,movs,r):    # i,j = curPos => x,y = goalPos
     if i == 0:
         row_temp = len(grid)
     else:
@@ -290,14 +290,9 @@ def calcCost(grid, i, j, x, y, movs, r):
     movs.append(str(i)+" "+str(j)+" "+locweight+" "+locname)
     cost, tempx, tempy, nodes, count, movOff, movL, movR, offGrid = 0,i,j,{},1,False,False,False,0
     while True:   
-        #print("THIS IS START")
-       # print("Offgrid is",offGrid)
         visited = str(tempx) + "," + str(tempy)
-       # print("THIS IS VISITED:",visited)
         nodes[visited]=1
         visiting = ""
-       # print("STARTTTTTT")
-        #print("x:",tempx,"y:",tempy)
         if tempx == x and tempy == y:
             break
         c = {} # Coords dict
@@ -439,13 +434,18 @@ def balance(r,grid):
     containers = {}
     codeCoords = getCCoord(grid)
     cost = 0
-
-    # Balancing logic
+    
+    if len(codeCoords) == 0:
+        print("Ship is empty!")
+        return [], [], True   
+    
     lhs, rhs, isBalanced = calculate_balance(grid)
+
+    
     if isBalanced:
         print("Ship is already balanced!")
         return None, True
-
+    
     movements = []
     Half = len(grid[0]) // 2
     while (not isBalanced):      
@@ -457,16 +457,17 @@ def balance(r,grid):
         codeCoords = getCCoord(grid)  
         currContainer = []
         currVals = []
-
         lhs, rhs, isBalanced = calculate_balance(grid)
         #Check Max Iteration
 
+        #Pick Side to Start on
         if lhs > rhs:
             for Position in codeCoords:
-                if (Position[1] < Half) and (grid[Position[0]][Position[1]] > 0):
+                if ((Position[1] < Half) and (grid[Position[0]][Position[1]] > 0)):
                     currContainer.append(Position)
                     currVals.append(grid[Position[0]][Position[1]])
                     containers[grid[Position[0]][Position[1]]] = Position
+            
         else:
             for Position in codeCoords:
                 if ((Position[1] >= Half) and (grid[Position[0]][Position[1]] > 0)):
