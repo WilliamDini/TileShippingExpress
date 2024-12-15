@@ -1,6 +1,6 @@
 from pathlib import Path
 import copy as c
-import json
+
 # class Container():
 #     def __init__(self, xPos, yPos, weight, name, id):
 #         self.xPos = xPos
@@ -91,7 +91,9 @@ def moveContainer(grid,side,containers,val,movements,r,sift=[-2,-2]):   # Functi
 
 def findOpenSpot(grid,side):
     #print("In findOpenSpot")
+    print("before halfsies")
     Halfsies = int(len(grid[0])) // 2
+    print("after halfsies")
     ShipGoalSide = []
     res = []
     Side = False
@@ -279,7 +281,7 @@ def validSpot(grid,i,j,r,c):
         return True
     return False    # Either spot is not on ground, or spot is floating (no container below it)
 
-def calcCost(grid, i, j, x, y, movs, r):  
+def calcCost(grid,i,j,x,y,movs,r):    # i,j = curPos => x,y = goalPos
     if i == 0:
         row_temp = len(grid)
     else:
@@ -287,17 +289,12 @@ def calcCost(grid, i, j, x, y, movs, r):
     label = str(row_temp)+","+str(j+1)
     locname = r[label][0]
     locweight = r[label][1]
-    movs.append(str(i)+" "+str(j)+" "+locweight+" "+locname)
+    movs.append(str(j+1)+" "+str(i+1)+" "+locweight+" "+locname)
     cost, tempx, tempy, nodes, count, movOff, movL, movR, offGrid = 0,i,j,{},1,False,False,False,0
     while True:   
-        #print("THIS IS START")
-       # print("Offgrid is",offGrid)
         visited = str(tempx) + "," + str(tempy)
-       # print("THIS IS VISITED:",visited)
         nodes[visited]=1
         visiting = ""
-       # print("STARTTTTTT")
-        #print("x:",tempx,"y:",tempy)
         if tempx == x and tempy == y:
             break
         c = {} # Coords dict
@@ -405,7 +402,7 @@ def calcCost(grid, i, j, x, y, movs, r):
             label = str(row_temp)+","+str(tempy+1)
             r[label] = [name,weight]
 
-            movs.append(str(newx)+" "+str(newy)+" "+weight+" "+name)
+            movs.append(str(newy+1)+" "+str(newx+1)+" "+weight+" "+"UNUSED")
             cost = cost + 1
             count = count + 1
             offGrid = 0
@@ -446,16 +443,26 @@ def balance(r,grid):
     containers = {}
     codeCoords = getCCoord(grid)
     cost = 0
+    
+    print("after get coord")
 
-    # Balancing logic
+    if len(codeCoords) == 0:
+        print("Ship is empty!")
+        return [], 0 #, [], True  
+    
+    # print(type(grid))
+    # print(grid)
     lhs, rhs, isBalanced = calculate_balance(grid)
+
+    
     if isBalanced:
         print("Ship is already balanced!")
         return None, True
-
+    print("not balanced")
     movements = []
     Half = len(grid[0]) // 2
-    while (not isBalanced):      
+    while (not isBalanced):   
+        print("in while loop")   
         if count == 100:
             movements = []
             print("Ship cannot be balanced. Begin Sift operation!")
@@ -464,16 +471,17 @@ def balance(r,grid):
         codeCoords = getCCoord(grid)  
         currContainer = []
         currVals = []
-
         lhs, rhs, isBalanced = calculate_balance(grid)
         #Check Max Iteration
 
+        #Pick Side to Start on
         if lhs > rhs:
             for Position in codeCoords:
-                if (Position[1] < Half) and (grid[Position[0]][Position[1]] > 0):
+                if ((Position[1] < Half) and (grid[Position[0]][Position[1]] > 0)):
                     currContainer.append(Position)
                     currVals.append(grid[Position[0]][Position[1]])
                     containers[grid[Position[0]][Position[1]]] = Position
+            
         else:
             for Position in codeCoords:
                 if ((Position[1] >= Half) and (grid[Position[0]][Position[1]] > 0)):
@@ -487,17 +495,27 @@ def balance(r,grid):
         side = 0 if lhs > rhs else 1
         bestContainerWeight = bestMove(currVals,lhs,rhs,side)
 
+        print("before move container")
+
         if (not canMove(grid,containers[bestContainerWeight][0],containers[bestContainerWeight][1])):        
             cost = cost + moveBlocked(grid,containers[bestContainerWeight][0],containers[bestContainerWeight][1],movements,r)
         newSide = 0 if side == 1 else 1
         cost = cost + moveContainer(grid,newSide,containers,bestContainerWeight,movements,r)
         
+        print("after move container")
+
+        print("before second balance check")
         # Check if balanced again
         lhs, rhs, isBalanced = calculate_balance(grid)
         count+=1
-    
+        print("after balance check")
+        ("print end while loop iteration")
     #Update Ships and return with Steps
-    return movements,cost #Steps, cost
+    # print(type(movements))
+    # print(movements)
+    # print(type(cost))
+    # print(cost)
+    return movements, cost #Steps, cost
     
     
 
@@ -534,9 +552,50 @@ ShipOne = [
             [3, 7, 0, 0,0,0,0,0,0,0,0,40]
         ]
 
+def readFileInput(file):
+    PROJECT_DIR = Path(__file__).parent
+    path = PROJECT_DIR / file
+    contents = path.read_text()
+    res = {}
+    grid = []
+    lines = contents.splitlines()
+    switch = "z"
+    count = 0
+    newList = []
+    for l in lines:
+        first = l[1:3]
+        if count == 0:
+            switch = first
+        elif switch != first and count != 0:
+            switch = first
+            grid.append(newList)
+            newList = []
+        x = int(l[1:3])
+        y = int(l[4:6])
+        loc = str(x)+","+str(y)
+        name = l[18:].strip()
+        weight = l[10:15].strip()
+        res[loc] = [name, weight]
+        if weight == "00000" and name == "NAN":
+            newList.append(-1)
+        elif weight == "00000" and name != "NAN":
+            newList.append(0)
+        else:
+            newList.append(int(weight))
+        count = count + 1
+    grid.append(newList)
+
+    idx = 0
+    for row in range(len(grid) - 1, 3, -1):
+        temp = grid[idx]
+        grid[idx] = grid[row]
+        grid[row] = temp
+        idx = idx + 1
+    return res, grid
+
 def readFile():
     PROJECT_DIR = Path(__file__).parent
-    path = PROJECT_DIR / 'ShipCase1 (1)(1).txt'
+    path = PROJECT_DIR / 'ShipCase1.txt'
     contents = path.read_text()
     res = {}
     grid = []
@@ -578,10 +637,16 @@ def readFile():
 def getVals(grid,val):
     return grid[val][0], grid[val][1]
 
-r,g = readFile()
-m,c = balance(r,g)
-print("TOTAL COST IS:",c)
+# r,g = readFile()
+# print("r length: " + str(len(r)) + " g length: " + str(len(g)))
+# # for element in g:
+# #     print(element)
+# # for element in r:
+# #     print(r)
+# m,c = balance(r,g)
+# m.reverse()
+# print("TOTAL COST IS:",c)
 
-print("movements")
-for i in m:
-    print(i)
+# print("movements")
+# for i in m:
+#     print(i)

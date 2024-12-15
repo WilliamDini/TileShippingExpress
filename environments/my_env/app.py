@@ -4,7 +4,7 @@ from grid import *
 from Transfer import *
 from Transfer import Problem
 from datetime import datetime, timezone
-from Balance import balance
+from Balance import balance, readFileInput
 import os
 import pytz
 import pickle
@@ -42,6 +42,8 @@ class DataStore():
     prevMove = 0
     moveOffLeft = 0
     currOpAdded = False
+    balanceEnd = False
+    balanceCost = 0
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -699,51 +701,44 @@ def checkAction():
 
 @app.route('/Balance', methods=["GET", "POST"])
 def Balance():
+    if len(DataStore.steps) > 0:
+        return balance_process_cont()
+
+    if len(DataStore.steps) == 0 and DataStore.balanceEnd == True:
+        return redirect(url_for('success'))
+
     if request.method == "POST":
+        if(request.args.get("moveTo") == "next") and len(DataStore.steps) > 0:
+            print("continuing steps")
+            return balance_process_cont()
+            
         log("Balance algorithm triggered.")
         print("Balance algorithm triggered", file=sys.stderr)
 
-        # Initialize grid and metadata
-        ship_grid = [[0 for _ in range(12)] for _ in range(8)]  # 8x12 grid
-        metadata = {}
-
-        # Construct the grid and metadata from containers
-        for container in DataStore.ship.containers:
-            row_idx = container.yPos - 1
-            col_idx = container.xPos - 1
-            weight_int = 0  # Default weight for empty spots
-
-            # Populate the grid and metadata
-            if container.name == "NAN":
-                ship_grid[row_idx][col_idx] = -1  # NAN is represented as -1
-                weight_int = -1
-            elif container.name == "UNUSED":
-                ship_grid[row_idx][col_idx] = 0  # UNUSED spaces are 0
-                weight_int = 0
-            else:
-                try:
-                    weight_int = int(container.weight) if container.weight.isdigit() else 0
-                except ValueError:
-                    print(f"Unexpected weight format for container '{container.name}' at position ({container.xPos}, {container.yPos}).", file=sys.stderr)
-                    weight_int = 0
-
-            # Populate the metadata for each grid location
-            grid_key = f"{len(ship_grid) - row_idx},{col_idx + 1}"
-            metadata[grid_key] = [container.name, str(weight_int)]  # Ensure weight is stored as string
-
-        # Debugging outputs
-        print("Constructed Grid:")
-        for row in ship_grid:
-            print(row)
-
-        print("Metadata:")
-        for key, value in metadata.items():
-            print(f"{key}: {value}")
-
-        # Run the balance algorithm
         try:
-            movements, cost = balance(metadata, ship_grid)
+            movements, cost = balance(r, g) #problem?
+            movements.reverse()
+            
+            DataStore.balanceCost = cost
 
+            index = 0
+            moveInOrder = []
+            for element in movements:
+                temp = element.split()
+                if(temp[3] == "UNUSED"):
+                    moveInOrder.insert(index, element)
+                    index += 1
+                else:
+                    moveInOrder.insert(index, element)
+                    index = 0
+
+            print("correct order")
+            for element in moveInOrder:
+                print(element)
+
+            print("reversed order")
+            for element in movements:
+                print(element)
             if not movements:
                 return render_template(
                     'Balance.html',
@@ -751,42 +746,71 @@ def Balance():
                     message="Ship is already balanced!"
                 )
 
-            # Apply movements to the ship
-            for move in movements:
-                start_row, start_col, start_weight, start_name = map(str.strip, move.split()[:4])
-                start_row, start_col = int(start_row), int(start_col)
-                end_row, end_col = map(int, move.split()[-2:])
-
-                # Clear the source position
-                for container in DataStore.ship.containers:
-                    if container.xPos - 1 == start_col and container.yPos - 1 == start_row:
-                        container.weight = "00000"
-                        container.name = "UNUSED"
-
-                # Update the destination position
-                for container in DataStore.ship.containers:
-                    if container.xPos - 1 == end_col and container.yPos - 1 == end_row:
-                        container.weight = f"{int(start_weight):05}"  # 5-digit padded weight
-                        container.name = start_name
-
-            save_state()
+            for element in movements:
+                print(type(element))
+            if len(DataStore.steps) == 0:
+                DataStore.tempContainerArray = copy.deepcopy(DataStore.ship.containers)
+                DataStore.problem = Problem(DataStore.tempContainerArray)
+                DataStore.problem.loadNestedContainers()
+                DataStore.steps = DataStore.problem.returnPathArray(moveInOrder)
+                print("after steps")
+                print(len(DataStore.steps))
+                DataStore.tempContainerArray = copy.deepcopy(DataStore.steps[0])
+                print("pop step from init")
+                DataStore.steps.pop(0)
 
             return render_template(
                 'Balance.html',
-                ship=DataStore.ship.containers,
+                ship=DataStore.tempContainerArray,
+                current_operation=DataStore.current_operation,
+                total_operations=DataStore.total_operations,
                 movements=movements,
-                cost=cost,
+                cost=DataStore.balanceCost,
+                action = "continue",
                 message="Balance algorithm completed successfully!"
             )
 
         except Exception as e:
             print(f"Error during balance computation: {e}", file=sys.stderr)
-            print(f"Metadata: {metadata}", file=sys.stderr)
-            print(f"Ship Grid: {ship_grid}", file=sys.stderr)
+            print(f"Metadata: {r}", file=sys.stderr)
+            print(f"Ship Grid: {g}", file=sys.stderr)
             return render_template('Error.html', error=f"Balance algorithm failed: {e}")
 
-    # Render the balance page initially
-    return render_template('Balance.html', ship=DataStore.ship.containers)
+    # Render the initial balance page
+    return render_template('Balance.html', 
+                           ship=DataStore.ship.containers,
+                           current_operation = DataStore.current_operation,
+                           cost = DataStore.balanceCost,
+                           action = "start")
+
+def balance_process_cont():
+    print("in balance process cont")
+    if len(DataStore.steps) > 0:
+        DataStore.tempContainerArray = copy.deepcopy(DataStore.steps[0])
+        print("pop step from balance cont")
+        DataStore.steps.pop(0)
+        print("remaining steps: " + str(len(DataStore.steps)), file = sys.stderr)
+    else:
+        print("no steps")
+
+    if len(DataStore.steps) == 0:
+        DataStore.action = "end"
+        DataStore.balanceEnd = True
+    else:
+        DataStore.action = "continue"
+
+    print(DataStore.action)
+
+    return render_template(
+            'Balance.html',
+            ship=DataStore.tempContainerArray,
+            current_operation=DataStore.current_operation,
+            total_operations=DataStore.total_operations,
+            action = str(DataStore.action),
+            cost = DataStore.balanceCost,
+            message = "Continuing algorithm"
+        )
+
 
 @app.route('/get_movements', methods=["GET"])
 def get_movements():
