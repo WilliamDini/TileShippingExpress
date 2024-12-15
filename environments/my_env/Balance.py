@@ -287,7 +287,7 @@ def calcCost(grid,i,j,x,y,movs,r):    # i,j = curPos => x,y = goalPos
     label = str(row_temp)+","+str(j+1)
     locname = r[label][0]
     locweight = r[label][1]
-    movs.append(str(j)+" "+str(i)+" "+locweight+" "+locname)
+    movs.append(str(j+1)+" "+str(i+1)+" "+locweight+" "+locname)
     cost, tempx, tempy, nodes, count, movOff, movL, movR, offGrid = 0,i,j,{},1,False,False,False,0
     while True:   
         visited = str(tempx) + "," + str(tempy)
@@ -400,7 +400,7 @@ def calcCost(grid,i,j,x,y,movs,r):    # i,j = curPos => x,y = goalPos
             label = str(row_temp)+","+str(tempy+1)
             r[label] = [name,weight]
 
-            movs.append(str(newy)+" "+str(newx)+" "+weight+" "+"UNUSED")
+            movs.append(str(newy+1)+" "+str(newx+1)+" "+weight+" "+"UNUSED")
             cost = cost + 1
             count = count + 1
             offGrid = 0
