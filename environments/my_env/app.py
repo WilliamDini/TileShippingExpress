@@ -327,6 +327,7 @@ def transfer_process_init():
 
     print("current operation: " + str(DataStore.current_operation) + " out of " + str(DataStore.total_operations))
     if (DataStore.current_operation == DataStore.total_operations and len(DataStore.steps) == 0 and DataStore.num_containers_to_load == 0 and DataStore.num_containers_to_remove == 0) or DataStore.current_operation > DataStore.total_operations:
+        DataStore.ship.containers = copy.deepcopy(DataStore.tempContainerArray)
         new_manifest_content = DataStore.ship.generate_manifest_content()
         new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
         new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
@@ -337,6 +338,7 @@ def transfer_process_init():
         session['new_manifest_filename'] = new_manifest_filename
         return redirect(url_for('success'))
     elif DataStore.total_operations == 0:
+        DataStore.ship.containers = copy.deepcopy(DataStore.tempContainerArray)
         new_manifest_content = DataStore.ship.generate_manifest_content()
         new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
         new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
@@ -481,8 +483,8 @@ def transfer_process_init():
         print("in datastore steps = 0")
         DataStore.prevAction = "Off"
         DataStore.currOpAdded = True
-        if DataStore.current_operation < DataStore.total_operations:
-            DataStore.current_operation += 1  # Increment current_operation here
+        # if DataStore.current_operation < DataStore.total_operations:
+        #     DataStore.current_operation += 1  # Increment current_operation here
     
     DataStore.iteration += 1
 
@@ -543,9 +545,9 @@ def transfer_process_on():
         if container_weight < 0:
             print(f"Negative weight ({container_weight}) entered. Adjusting to 0.", file=sys.stderr)
             container_weight = 0  
-        elif container_weight > 9999:
-            print(f"Weight ({container_weight}) exceeds 9999. Adjusting to 9999.", file=sys.stderr)
-            container_weight = 9999 
+        elif container_weight > 99999:
+            print(f"Weight ({container_weight}) exceeds 99999. Adjusting to 99999.", file=sys.stderr)
+            container_weight = 99999 
         else:
             container_weight = round(container_weight) 
 
