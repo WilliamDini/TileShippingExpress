@@ -697,8 +697,8 @@ def readFile():
             newList.append(int(weight))
         count = count+1
     grid.append(newList)
-    #for r in res:
-       # print(res[r])
+    for r in res:
+        print(res[r])
 
     idx = 0
     for row in range(len(grid)-1,3,-1):
@@ -706,6 +706,7 @@ def readFile():
         grid[idx] = grid[row]
         grid[row] = temp
         idx = idx + 1
+    print(grid)
     return res,grid
 
 # def update(grid,dict):

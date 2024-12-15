@@ -4,7 +4,7 @@ from grid import *
 from Transfer import *
 from Transfer import Problem
 from datetime import datetime, timezone
-from Balance import balance
+from Balance import balance, readFileInput
 import os
 import pytz
 import pickle
@@ -663,49 +663,76 @@ def Balance():
     if request.method == "POST":
         log("Balance algorithm triggered.")
         print("Balance algorithm triggered", file=sys.stderr)
+        r, g = readFileInput(DataStore.fileName)
+        # # Construct the grid from the ship containers
+        # ship_grid = []
+        # metadata = {}
+        # for container in DataStore.ship.containers:
+        #     row_idx = container.yPos - 1
+        #     col_idx = container.xPos - 1
 
-        # Construct the grid from the ship containers
-        ship_grid = []
-        metadata = {}
-        for container in DataStore.ship.containers:
-            row_idx = container.yPos - 1
-            col_idx = container.xPos - 1
+        #     # print("container coords: row = " + str(row_idx) + " col = " + str(col_idx))
 
-            # Ensure the grid has enough rows
-            while len(ship_grid) <= row_idx:
-                ship_grid.append([0] * 12)  # Initialize a 12-column row
+        #     # Ensure the grid has enough rows
+        #     while len(ship_grid) <= row_idx:
+        #         ship_grid.append([0] * 12)  # Initialize a 12-column row
 
-            # Populate the grid based on container properties
-            if container.name == "NAN":
-                ship_grid[row_idx][col_idx] = -1  # NAN is represented as -1
-                weight_int = -1
-            elif container.name == "UNUSED":
-                ship_grid[row_idx][col_idx] = 0  # UNUSED spaces are 0
-                weight_int = 0
-            else:
-                try:
-                    weight_int = int(container.weight) if container.weight.isdigit() else 0
-                except ValueError:
-                    print(f"Unexpected weight format for container '{container.name}' at position ({container.xPos}, {container.yPos}).", file=sys.stderr)
-                    weight_int = 0
+        #     # Populate the grid based on container properties
+        #     if container.name == "NAN":
+        #         ship_grid[row_idx][col_idx] = -1  # NAN is represented as -1
+        #         weight_int = -1
+        #     elif container.name == "UNUSED":
+        #         ship_grid[row_idx][col_idx] = 0  # UNUSED spaces are 0
+        #         weight_int = 0
+        #     else:
+        #         try:
+        #             if container.weight.isdigit():
+        #                 # print(container.weight)
+        #                 ship_grid[row_idx][col_idx] = container.weight
+        #                 weight_int = int(container.weight) #if container.weight.isdigit() 
+        #             else:
+        #                 print("no weight detected")
+        #                 weight_int = 0
+        #             # weight_int = int(container.weight) if container.weight.isdigit() else 0
+        #         except ValueError:
+        #             print(f"Unexpected weight format for container '{container.name}' at position ({container.xPos}, {container.yPos}).", file=sys.stderr)
+        #             weight_int = 0
+        #     # print(type(weight_int))
 
-            # Populate the metadata for each grid location
-            grid_key = f"{len(ship_grid) - row_idx},{col_idx + 1}"
-            metadata[grid_key] = [container.name, str(weight_int)]  # Ensure weight is stored as string
+        #     # Populate the metadata for each grid location
+        #     grid_key = f"{row_idx + 1},{col_idx + 1}"
+        #     # print(len(ship_grid))
+        #     # print(row_idx)
+        #     # print(grid_key)
+        #     # grid_key = (len(ship_grid) - row_idx),(col_idx + 1)
+        #     metadata[grid_key] = [container.name, str(weight_int)]  # Ensure weight is stored as string)
+        #     # print("metadata length" + str(len(metadata)))
+        #     #for key, value in metadata.items():
+        #     #    print(f"{key}: {value}")
 
-        # Print the constructed grid for debugging
-        print("Constructed Grid:")
-        for row in ship_grid:
-            print(row)
+        # # Print the constructed grid for debugging
+        # # print("Constructed Grid:")
+        # for row in ship_grid:
+        #     # print(row)
+        #     for element in row:
+        #         # print(element)
+        #         # print(type(element))
+        #         if type(element) == str:
+        #             rowIndex = row.index(element)
+        #             ship_grid[ship_grid.index(row)][rowIndex] = int(element)
+        #             # print(ship_grid[ship_grid.index(row)][rowIndex])
+        #             # print(type(ship_grid[ship_grid.index(row)][rowIndex]))
 
-        print("Metadata:")
-        for key, value in metadata.items():
-            print(f"{key}: {value}")
+        # # print("Metadata:")
+        # # for key, value in metadata.items():
+        # #     print(f"{key}: {value}")
 
+        
         # Perform the balance algorithm
         try:
-            movements, cost = balance(metadata, ship_grid)
-
+            movements, cost = balance(r, g) #problem?
+            for element in movements:
+                print(element)
             if not movements:
                 return render_template(
                     'Balance.html',
@@ -714,28 +741,54 @@ def Balance():
                 )
 
             # Apply movements to the ship containers
-            for move in movements:
-                start_row, start_col, start_weight, start_name = map(str.strip, move.split()[:4])
-                start_row, start_col = int(start_row), int(start_col)
-                end_row, end_col = map(int, move.split()[-2:])
+            # for move in movements:
+            #     print(move)
+            #     start_row, start_col, start_weight, start_name = map(str.strip, move.split()[:4])
+            #     print("separating values")
+            #     print(start_row)
+            #     print(start_col)
+            #     print(start_weight)
+            #     print(start_name)
+            #     start_row, start_col = int(start_row), int(start_col)
+            #     print("after int for startrow, startcol")
+            #     end_row, end_col = map(int, move.split()[-2:])
+            #     print("after map")
 
-                # Clear the source position
-                for container in DataStore.ship.containers:
-                    if container.xPos - 1 == start_col and container.yPos - 1 == start_row:
-                        container.weight = "00000"
-                        container.name = "UNUSED"
+            #     print("after separating pos x y")
+            #     # Clear the source position
+            #     for container in DataStore.ship.containers:
+            #         if container.xPos - 1 == start_col and container.yPos - 1 == start_row:
+            #             container.weight = "00000"
+            #             container.name = "UNUSED"
+            #     print("after container weight and name change")
 
-                # Update the destination position
-                for container in DataStore.ship.containers:
-                    if container.xPos - 1 == end_col and container.yPos - 1 == end_row:
-                        container.weight = f"{int(start_weight):05}"
-                        container.name = start_name
+            #     # Update the destination position
+            #     for container in DataStore.ship.containers:
+            #         if container.xPos - 1 == end_col and container.yPos - 1 == end_row:
+            #             container.weight = f"{int(start_weight):05}"
+            #             container.name = start_name
+            #     print("after updatingc container weight and name")
 
-            save_state()
+            # save_state()
+
+            for element in movements:
+                print(type(element))
+            if len(DataStore.steps) == 0:
+                DataStore.tempContainerArray = copy.deepcopy(DataStore.ship.containers)
+                DataStore.problem = Problem(DataStore.tempContainerArray)
+                DataStore.problem.loadNestedContainers()
+                DataStore.steps = DataStore.problem.returnPathArray(movements)
+                print("after steps")
+                print(len(DataStore.steps))
+                DataStore.tempContainerArray = copy.deepcopy(DataStore.steps[0])
+                print("pop step from init")
+                DataStore.steps.pop(0)
 
             return render_template(
                 'Balance.html',
-                ship=DataStore.ship.containers,
+                ship=DataStore.tempContainerArray,
+                current_operation=DataStore.current_operation,
+                total_operations=DataStore.total_operations,
                 movements=movements,
                 cost=cost,
                 message="Balance algorithm completed successfully!"

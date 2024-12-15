@@ -108,7 +108,7 @@ class Problem():
             temp = x.split()
             arrayOfSteps.append(temp)
             #print(temp)
-        # print(arrayOfSteps)
+        print(arrayOfSteps)
 
         temp = []
         for i in arrayOfSteps:
@@ -141,7 +141,6 @@ class Problem():
             #compare og shipContainers array with changes (start and end variables)
             #make new array set it to pathContainers array
             # print(arrayOfOps[index])
-            #print("what is the fucking name")
             # print(self.pathContainers[0].name)
             tempPathContainers = copy.deepcopy(self.pathContainers[::-1])
             for step in arrayOfOps[index]:
