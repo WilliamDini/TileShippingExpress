@@ -43,11 +43,25 @@
         {% endfor %}
     </div>
 
+    {% if action == "start" %}
     <div class="button-container">
         <form action="/Balance" method="post">
             <button type="submit" class="balance-button">Run Balance Algorithm</button>
         </form>
     </div>
+    {% endif %}
+
+    {% if action != "start" %}
+    <div style="text-align: right;">
+        <button type="button" onclick="window.location.href='{{ url_for('Balance') }}'">Continue</button>
+    </div>
+    {% endif %}
+
+    {% if action == "end" %}
+    <div style="text-align: right;">
+        <button type="button" onclick="window.location.href='{{ url_for('Balance') }}'">Finish</button>
+    </div>
+    {% endif %}
 
     {% if message %}
     <p class="message">{{ message }}</p>

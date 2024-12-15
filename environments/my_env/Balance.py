@@ -289,7 +289,7 @@ def calcCost(grid,i,j,x,y,movs,r):    # i,j = curPos => x,y = goalPos
     label = str(row_temp)+","+str(j+1)
     locname = r[label][0]
     locweight = r[label][1]
-    movs.append(str(i)+" "+str(j)+" "+locweight+" "+locname)
+    movs.append(str(j+1)+" "+str(i+1)+" "+locweight+" "+locname)
     cost, tempx, tempy, nodes, count, movOff, movL, movR, offGrid = 0,i,j,{},1,False,False,False,0
     while True:   
         visited = str(tempx) + "," + str(tempy)
@@ -402,7 +402,7 @@ def calcCost(grid,i,j,x,y,movs,r):    # i,j = curPos => x,y = goalPos
             label = str(row_temp)+","+str(tempy+1)
             r[label] = [name,weight]
 
-            movs.append(str(newx)+" "+str(newy)+" "+weight+" "+"UNUSED")
+            movs.append(str(newy+1)+" "+str(newx+1)+" "+weight+" "+"UNUSED")
             cost = cost + 1
             count = count + 1
             offGrid = 0
@@ -450,8 +450,8 @@ def balance(r,grid):
         print("Ship is empty!")
         return [], 0 #, [], True  
     
-    print(type(grid))
-    print(grid)
+    # print(type(grid))
+    # print(grid)
     lhs, rhs, isBalanced = calculate_balance(grid)
 
     
@@ -511,10 +511,10 @@ def balance(r,grid):
         print("after balance check")
         ("print end while loop iteration")
     #Update Ships and return with Steps
-    print(type(movements))
-    print(movements)
-    print(type(cost))
-    print(cost)
+    # print(type(movements))
+    # print(movements)
+    # print(type(cost))
+    # print(cost)
     return movements, cost #Steps, cost
     
     
