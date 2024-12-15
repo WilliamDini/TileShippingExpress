@@ -450,8 +450,8 @@ def balance(r,grid):
         print("Ship is empty!")
         return [], 0 #, [], True  
     
-    print(type(grid))
-    print(grid)
+    # print(type(grid))
+    # print(grid)
     lhs, rhs, isBalanced = calculate_balance(grid)
 
     
@@ -511,10 +511,10 @@ def balance(r,grid):
         print("after balance check")
         ("print end while loop iteration")
     #Update Ships and return with Steps
-    print(type(movements))
-    print(movements)
-    print(type(cost))
-    print(cost)
+    # print(type(movements))
+    # print(movements)
+    # print(type(cost))
+    # print(cost)
     return movements, cost #Steps, cost
     
     
@@ -637,16 +637,16 @@ def readFile():
 def getVals(grid,val):
     return grid[val][0], grid[val][1]
 
-r,g = readFile()
-print("r length: " + str(len(r)) + " g length: " + str(len(g)))
-# for element in g:
-#     print(element)
-# for element in r:
-#     print(r)
-m,c = balance(r,g)
-m.reverse()
-print("TOTAL COST IS:",c)
+# r,g = readFile()
+# print("r length: " + str(len(r)) + " g length: " + str(len(g)))
+# # for element in g:
+# #     print(element)
+# # for element in r:
+# #     print(r)
+# m,c = balance(r,g)
+# m.reverse()
+# print("TOTAL COST IS:",c)
 
-print("movements")
-for i in m:
-    print(i)
+# print("movements")
+# for i in m:
+#     print(i)
