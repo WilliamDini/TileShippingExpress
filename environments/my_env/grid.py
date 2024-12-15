@@ -28,7 +28,22 @@ class Ship():
 
     def __setstate__(self, state):
         self.containers = state.get("containers", [])
-        
+
+    def generate_manifest_content(self):
+        manifest_lines = []
+        max_y = max(container.yPos for container in self.containers) 
+
+        for adjusted_yPos in range(1, max_y + 1):
+            original_yPos = max_y - adjusted_yPos + 1
+
+            for container in sorted(self.containers, key=lambda c: c.xPos):
+                if container.yPos == original_yPos:
+                    line = f"[{adjusted_yPos:02},{container.xPos:02}], {{{container.weight}}}, {container.name}\n"
+                    manifest_lines.append(line)
+
+        return ''.join(manifest_lines)
+
+     
     def loadGrid(self, fileName):
         self.containers.clear()
         print(f"Loading grid from file: {fileName}", file=sys.stderr)

@@ -268,7 +268,17 @@ def transfer_process():
 
         current_operation += 1
         if current_operation > total_operations:
-            return redirect(url_for('success'))
+            new_manifest_content = DataStore.ship.generate_manifest_content()
+            new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
+            new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
+        
+        # Save the new manifest to a file
+            with open(new_manifest_path, 'w') as f:
+                f.write(new_manifest_content)
+        
+        # Save the new manifest filename in the session for download
+        session['new_manifest_filename'] = new_manifest_filename
+        return redirect(url_for('success'))
 
     return render_template(
         'TransferProcess.html',
@@ -319,8 +329,28 @@ def transfer_process_init():
 
     print("current operation: " + str(DataStore.current_operation) + " out of " + str(DataStore.total_operations))
     if (DataStore.current_operation == DataStore.total_operations and len(DataStore.steps) == 0 and DataStore.num_containers_to_load == 0 and DataStore.num_containers_to_remove == 0) or DataStore.current_operation > DataStore.total_operations:
+        DataStore.ship.containers = copy.deepcopy(DataStore.tempContainerArray)
+        new_manifest_content = DataStore.ship.generate_manifest_content()
+        new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
+        new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
+        
+        with open(new_manifest_path, 'w') as f:
+            f.write(new_manifest_content)
+        
+        session['new_manifest_filename'] = new_manifest_filename
         return redirect(url_for('success'))
     elif DataStore.total_operations == 0:
+        DataStore.ship.containers = copy.deepcopy(DataStore.tempContainerArray)
+        new_manifest_content = DataStore.ship.generate_manifest_content()
+        new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
+        new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
+        
+        # Save the new manifest to a file
+        with open(new_manifest_path, 'w') as f:
+            f.write(new_manifest_content)
+        
+        # Save the new manifest filename in the session for download
+        session['new_manifest_filename'] = new_manifest_filename
         return redirect(url_for('success'))
 
     if DataStore.num_containers_to_load == 0:
@@ -455,8 +485,8 @@ def transfer_process_init():
         print("in datastore steps = 0")
         DataStore.prevAction = "Off"
         DataStore.currOpAdded = True
-        if DataStore.current_operation < DataStore.total_operations:
-            DataStore.current_operation += 1  # Increment current_operation here
+        # if DataStore.current_operation < DataStore.total_operations:
+        #     DataStore.current_operation += 1  # Increment current_operation here
     
     DataStore.iteration += 1
 
@@ -517,9 +547,9 @@ def transfer_process_on():
         if container_weight < 0:
             print(f"Negative weight ({container_weight}) entered. Adjusting to 0.", file=sys.stderr)
             container_weight = 0  
-        elif container_weight > 9999:
-            print(f"Weight ({container_weight}) exceeds 9999. Adjusting to 9999.", file=sys.stderr)
-            container_weight = 9999 
+        elif container_weight > 99999:
+            print(f"Weight ({container_weight}) exceeds 99999. Adjusting to 99999.", file=sys.stderr)
+            container_weight = 99999 
         else:
             container_weight = round(container_weight) 
 
@@ -597,29 +627,38 @@ def transfer_process_on():
 
 def transfer_process_off_cont():
     current_operation = request.args.get("current", 1, type=int)
-    print("in transfer_process_off_cont", file = sys.stderr)
+    print("in transfer_process_off_cont", file=sys.stderr)
 
     if len(DataStore.steps) > 0:
         DataStore.tempContainerArray = copy.deepcopy(DataStore.steps[0])
         print("pop step from off cont")
         DataStore.steps.pop(0)
-        print("remaining steps: " + str(len(DataStore.steps)), file = sys.stderr)
+        print("remaining steps: " + str(len(DataStore.steps)), file=sys.stderr)
+
+        # Update the container being unloaded
+        if DataStore.tempContainerArray:
+            for container in DataStore.tempContainerArray:
+                if container.name != "UNUSED":
+                    print(f"Unloading container: {container.name} at ({container.xPos}, {container.yPos})", file=sys.stderr)
+                    container.name = "UNUSED"
+                    container.weight = "00000"
+
         if len(DataStore.steps) == 0:
-            DataStore.currOpAdded= False
+            DataStore.currOpAdded = False
     else:
         print("changing currOp to false in off cont")
         DataStore.currOpAdded = False
 
     DataStore.prevAction = ""
     return render_template(
-            'TransferProcess.html',
-            ship=DataStore.tempContainerArray,
-            current_operation=DataStore.current_operation,
-            total_operations=DataStore.total_operations,
-            action = DataStore.action,
-            prevAction = DataStore.prevAction,
-            numContRemove = DataStore.num_containers_to_remove
-        )
+        'TransferProcess.html',
+        ship=DataStore.tempContainerArray,
+        current_operation=DataStore.current_operation,
+        total_operations=DataStore.total_operations,
+        action=DataStore.action,
+        prevAction=DataStore.prevAction,
+        numContRemove=DataStore.num_containers_to_remove
+    )
 
 #IMPORTANT KEEP THIS TO HANDLE WHICH CONTAINERS SELECTED
 @app.route('/Transfer-process-changes', methods = ["GET", "POST"])
@@ -675,9 +714,7 @@ def Balance():
             
         log("Balance algorithm triggered.")
         print("Balance algorithm triggered", file=sys.stderr)
-        r, g = readFileInput(DataStore.fileName)
-        
-        # Perform the balance algorithm
+
         try:
             movements, cost = balance(r, g) #problem?
             movements.reverse()
@@ -732,6 +769,7 @@ def Balance():
                 action = "continue",
                 message="Balance algorithm completed successfully!"
             )
+
         except Exception as e:
             print(f"Error during balance computation: {e}", file=sys.stderr)
             print(f"Metadata: {r}", file=sys.stderr)
@@ -778,6 +816,7 @@ def balance_process_cont():
 def get_movements():
     movements = session.get('movements', [])
     return jsonify({"movements": movements})
+
 
 @app.route('/typeFile', methods=['GET', 'POST'])
 def fileUpload():
@@ -833,6 +872,7 @@ def log_comment():
 
 @app.route('/Success', methods=["GET"])
 def success():
+    new_manifest_filename = session.get('new_manifest_filename', None)
     return render_template('Success.html')
 
 if __name__ == "__main__":
