@@ -402,7 +402,7 @@ def calcCost(grid,i,j,x,y,movs,r):    # i,j = curPos => x,y = goalPos
             label = str(row_temp)+","+str(tempy+1)
             r[label] = [name,weight]
 
-            movs.append(str(newx)+" "+str(newy)+" "+weight+" "+name)
+            movs.append(str(newx)+" "+str(newy)+" "+weight+" "+"UNUSED")
             cost = cost + 1
             count = count + 1
             offGrid = 0
@@ -438,9 +438,7 @@ def balance(r,grid):
     if not isinstance(r, dict):
         raise TypeError("r should be a dictionary")
     rcpy = r.copy()
-
-    print("before get Coord")
-
+    
     contcpy = {}
     containers = {}
     codeCoords = getCCoord(grid)
@@ -646,6 +644,7 @@ print("r length: " + str(len(r)) + " g length: " + str(len(g)))
 # for element in r:
 #     print(r)
 m,c = balance(r,g)
+m.reverse()
 print("TOTAL COST IS:",c)
 
 print("movements")
