@@ -715,25 +715,21 @@ def Balance():
 
             # Populate the grid and metadata
             if container.name == "NAN":
-                ship_grid[row_idx][col_idx] = -1  # NAN represented as -1
+                ship_grid[row_idx][col_idx] = -1  # NAN is represented as -1
+                weight_int = -1
             elif container.name == "UNUSED":
                 ship_grid[row_idx][col_idx] = 0  # UNUSED spaces are 0
+                weight_int = 0
             else:
-                # Parse weight safely and handle invalid values
                 try:
-                    weight_int = int(container.weight)
-                    ship_grid[row_idx][col_idx] = weight_int
+                    weight_int = int(container.weight) if container.weight.isdigit() else 0
                 except ValueError:
-                    print(
-                        f"Invalid weight '{container.weight}' for container '{container.name}' "
-                        f"at ({row_idx}, {col_idx}).",
-                        file=sys.stderr,
-                    )
+                    print(f"Unexpected weight format for container '{container.name}' at position ({container.xPos}, {container.yPos}).", file=sys.stderr)
                     weight_int = 0
 
-            # Update metadata
-            grid_key = f"{len(ship_grid) - row_idx},{col_idx + 1}"  # Metadata uses 1-based indexing
-            metadata[grid_key] = [container.name, str(weight_int)]
+            # Populate the metadata for each grid location
+            grid_key = f"{len(ship_grid) - row_idx},{col_idx + 1}"
+            metadata[grid_key] = [container.name, str(weight_int)]  # Ensure weight is stored as string
 
         # Debugging outputs
         print("Constructed Grid:")
@@ -747,6 +743,7 @@ def Balance():
         # Run the balance algorithm
         try:
             movements, cost = balance(metadata, ship_grid)
+
             if not movements:
                 return render_template(
                     'Balance.html',
@@ -784,17 +781,18 @@ def Balance():
 
         except Exception as e:
             print(f"Error during balance computation: {e}", file=sys.stderr)
+            print(f"Metadata: {metadata}", file=sys.stderr)
+            print(f"Ship Grid: {ship_grid}", file=sys.stderr)
             return render_template('Error.html', error=f"Balance algorithm failed: {e}")
 
     # Render the balance page initially
     return render_template('Balance.html', ship=DataStore.ship.containers)
 
-
-
 @app.route('/get_movements', methods=["GET"])
 def get_movements():
     movements = session.get('movements', [])
     return jsonify({"movements": movements})
+
 
 @app.route('/typeFile', methods=['GET', 'POST'])
 def fileUpload():
