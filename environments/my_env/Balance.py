@@ -400,7 +400,7 @@ def calcCost(grid,i,j,x,y,movs,r):    # i,j = curPos => x,y = goalPos
             label = str(row_temp)+","+str(tempy+1)
             r[label] = [name,weight]
 
-            movs.append(str(newx)+" "+str(newy)+" "+weight+" "+name)
+            movs.append(str(newx)+" "+str(newy)+" "+weight+" "+"UNUSED")
             cost = cost + 1
             count = count + 1
             offGrid = 0
@@ -581,6 +581,7 @@ def getVals(grid,val):
 
 r,g = readFile()
 m,c = balance(r,g)
+m.reverse()
 print("TOTAL COST IS:",c)
 
 print("movements")
