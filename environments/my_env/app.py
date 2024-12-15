@@ -678,14 +678,20 @@ def Balance():
             # Populate the grid based on container properties
             if container.name == "NAN":
                 ship_grid[row_idx][col_idx] = -1  # NAN is represented as -1
+                weight_int = -1
             elif container.name == "UNUSED":
                 ship_grid[row_idx][col_idx] = 0  # UNUSED spaces are 0
+                weight_int = 0
             else:
-                ship_grid[row_idx][col_idx] = int(container.weight)
+                try:
+                    weight_int = int(container.weight) if container.weight.isdigit() else 0
+                except ValueError:
+                    print(f"Unexpected weight format for container '{container.name}' at position ({container.xPos}, {container.yPos}).", file=sys.stderr)
+                    weight_int = 0
 
             # Populate the metadata for each grid location
             grid_key = f"{len(ship_grid) - row_idx},{col_idx + 1}"
-            metadata[grid_key] = [container.name, int(container.weight)]
+            metadata[grid_key] = [container.name, str(weight_int)]  # Ensure weight is stored as string
 
         # Print the constructed grid for debugging
         print("Constructed Grid:")
@@ -700,13 +706,11 @@ def Balance():
         try:
             movements, cost = balance(metadata, ship_grid)
 
-            if not movements:  # Ship is already balanced or cannot be balanced
+            if not movements:
                 return render_template(
                     'Balance.html',
                     ship=DataStore.ship.containers,
-                    movements=[],
-                    cost=cost,
-                    message="The ship is already balanced!" if cost == 0 else "The ship cannot be balanced!"
+                    message="Ship is already balanced!"
                 )
 
             # Apply movements to the ship containers
@@ -738,11 +742,17 @@ def Balance():
             )
         except Exception as e:
             print(f"Error during balance computation: {e}", file=sys.stderr)
+            print(f"Metadata: {metadata}", file=sys.stderr)
+            print(f"Ship Grid: {ship_grid}", file=sys.stderr)
             return render_template('Error.html', error=f"Balance algorithm failed: {e}")
 
     # Render the initial balance page
     return render_template('Balance.html', ship=DataStore.ship.containers)
 
+@app.route('/get_movements', methods=["GET"])
+def get_movements():
+    movements = session.get('movements', [])
+    return jsonify({"movements": movements})
 
 @app.route('/typeFile', methods=['GET', 'POST'])
 def fileUpload():

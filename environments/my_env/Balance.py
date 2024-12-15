@@ -428,9 +428,16 @@ def bestMove(grid, lhs, rhs, side):
 
 def balance(r,grid):
     count = 0
-    gridcpy = c.deepcopy(grid)
+    
+    if not isinstance(grid, list):
+        raise TypeError("grid should be a list")
+    gridcpy = grid.copy()
+    
+    if not isinstance(r, dict):
+        raise TypeError("r should be a dictionary")
+    rcpy = r.copy()
+    
     contcpy = {}
-    rcpy = c.deepcopy(r)
     containers = {}
     codeCoords = getCCoord(grid)
     cost = 0
@@ -530,7 +537,7 @@ ShipOne = [
 
 def readFile():
     PROJECT_DIR = Path(__file__).parent
-    path = PROJECT_DIR / 'SilverQueen.txt'
+    path = PROJECT_DIR / 'ShipCase1 (1)(1).txt'
     contents = path.read_text()
     res = {}
     grid = []
@@ -549,25 +556,25 @@ def readFile():
         x = int(l[1:3])
         y = int(l[4:6])
         loc = str(x)+","+str(y)
-        name = (l[18:])
-        weight = l[10:15]
-        res[loc] = [name,weight]
+        name = l[18:].strip()
+        weight = l[10:15].strip()
+        res[loc] = [name, weight]
         if weight == "00000" and name == "NAN":
             newList.append(-1)
         elif weight == "00000" and name != "NAN":
             newList.append(0)
         else:
             newList.append(int(weight))
-        count = count+1
+        count = count + 1
     grid.append(newList)
 
     idx = 0
-    for row in range(len(grid)-1,3,-1):
+    for row in range(len(grid) - 1, 3, -1):
         temp = grid[idx]
         grid[idx] = grid[row]
         grid[row] = temp
         idx = idx + 1
-    return res,grid
+    return res, grid
         
 def getVals(grid,val):
     return grid[val][0], grid[val][1]
