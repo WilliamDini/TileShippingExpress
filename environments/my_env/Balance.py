@@ -537,7 +537,7 @@ ShipOne = [
 
 def readFile():
     PROJECT_DIR = Path(__file__).parent
-    path = PROJECT_DIR / 'ShipCase1 (1)(1).txt'
+    path = PROJECT_DIR / 'ShipCase1.txt'
     contents = path.read_text()
     res = {}
     grid = []
