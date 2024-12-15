@@ -43,6 +43,7 @@ class DataStore():
     moveOffLeft = 0
     currOpAdded = False
     balanceEnd = False
+    balanceCost = 0
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -681,6 +682,8 @@ def Balance():
             movements, cost = balance(r, g) #problem?
             movements.reverse()
             
+            DataStore.balanceCost = cost
+
             index = 0
             moveInOrder = []
             for element in movements:
@@ -725,7 +728,7 @@ def Balance():
                 current_operation=DataStore.current_operation,
                 total_operations=DataStore.total_operations,
                 movements=movements,
-                cost=cost,
+                cost=DataStore.balanceCost,
                 action = "continue",
                 message="Balance algorithm completed successfully!"
             )
@@ -739,6 +742,7 @@ def Balance():
     return render_template('Balance.html', 
                            ship=DataStore.ship.containers,
                            current_operation = DataStore.current_operation,
+                           cost = DataStore.balanceCost,
                            action = "start")
 
 def balance_process_cont():
@@ -751,12 +755,21 @@ def balance_process_cont():
     else:
         print("no steps")
 
+    if len(DataStore.steps) == 0:
+        DataStore.action = "end"
+        DataStore.balanceEnd = True
+    else:
+        DataStore.action = "continue"
+
+    print(DataStore.action)
+
     return render_template(
-            'TransferProcess.html',
+            'Balance.html',
             ship=DataStore.tempContainerArray,
             current_operation=DataStore.current_operation,
             total_operations=DataStore.total_operations,
-            action = "continue",
+            action = str(DataStore.action),
+            cost = DataStore.balanceCost,
             message = "Continuing algorithm"
         )
 

@@ -11,6 +11,12 @@
 <body>
     <h1 class="page-title">Balance Page</h1>
 
+    {% if action != "start" %}
+        <div>
+            Estimated Time to Complete: {{ cost }} minutes
+        </div>
+    {% endif %}
+
     <div class="grid-container">
         {% for container in ship %}
         <div id="{{ container.id }}_{{ container.name }}" 
@@ -49,15 +55,13 @@
             <button type="submit" class="balance-button">Run Balance Algorithm</button>
         </form>
     </div>
-    {% endif %}
 
-    {% if action != "start" %}
-    <div style="text-align: right;">
+    {% elif action == "continue" %}
+    <div style="text-align: center;">
         <button type="button" onclick="window.location.href='{{ url_for('Balance') }}'">Continue</button>
     </div>
-    {% endif %}
 
-    {% if action == "end" %}
+    {% else %}
     <div style="text-align: right;">
         <button type="button" onclick="window.location.href='{{ url_for('Balance') }}'">Finish</button>
     </div>
@@ -66,6 +70,7 @@
     {% if message %}
     <p class="message">{{ message }}</p>
     {% endif %}
+
     <div class="comment-box">
         <form action="{{ url_for('log_comment') }}" method="post">
             <label for="comment">Add Comment:</label>
