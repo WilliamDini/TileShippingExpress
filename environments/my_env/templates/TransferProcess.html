@@ -11,12 +11,7 @@
 <body>
 
     <h1 class="page-title">Transfer Process</h1>
-    {% if current_operation == 1 %}
     <p class="operation-status">Operation {{ current_operation }} of {{ total_operations }}</p>
-    {% endif %}
-    {% if current_operation > 1 %}
-    <p class="operation-status">Operation {{ current_operation }} of {{ total_operations }}</p>
-    {% endif %}
     <div class="grid-container">
         {% for container in ship %}
         <div id="{{ container.id }}_{{ container.name }}" 
@@ -50,7 +45,7 @@
         {% endfor %}
     </div>
 
-    {% if action == "On" and prevAction != "On" and current_operation - 1 < total_operations %}
+    {% if action == "On" and prevAction != "On" and current_operation <= total_operations and numLoad > 0 %}
     <div class="form-container">
         <form action="{{ url_for('transfer_process_init', current=current_operation, moveTo='On') }}" method="post">
             <label for="container-name">Container Name:</label>
@@ -62,11 +57,9 @@
     </div>
     {% endif %}
 
-    {% if action == "Off" or (current_operation - 1 == total_operations) %}
+    {% if action == "Off" or numLoad == 0 %}
     <div style="text-align: right;">
-        <!-- <form action="{{ url_for('transfer_process_init', current=current_operation, moveTo='On') }}" method="post"> -->
         <button type="button" onclick="window.location.href='{{ url_for('transfer_process_init', current=current_operation, moveTo='Off') }}'">Continue</button>
-        <!-- </form> -->
     </div>
     {% endif %}
 
