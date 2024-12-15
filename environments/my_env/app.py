@@ -266,7 +266,17 @@ def transfer_process():
 
         current_operation += 1
         if current_operation > total_operations:
-            return redirect(url_for('success'))
+            new_manifest_content = DataStore.ship.generate_manifest_content()
+            new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
+            new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
+        
+        # Save the new manifest to a file
+            with open(new_manifest_path, 'w') as f:
+                f.write(new_manifest_content)
+        
+        # Save the new manifest filename in the session for download
+        session['new_manifest_filename'] = new_manifest_filename
+        return redirect(url_for('success'))
 
     return render_template(
         'TransferProcess.html',
@@ -317,8 +327,26 @@ def transfer_process_init():
 
     print("current operation: " + str(DataStore.current_operation) + " out of " + str(DataStore.total_operations))
     if (DataStore.current_operation == DataStore.total_operations and len(DataStore.steps) == 0 and DataStore.num_containers_to_load == 0 and DataStore.num_containers_to_remove == 0) or DataStore.current_operation > DataStore.total_operations:
+        new_manifest_content = DataStore.ship.generate_manifest_content()
+        new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
+        new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
+        
+        with open(new_manifest_path, 'w') as f:
+            f.write(new_manifest_content)
+        
+        session['new_manifest_filename'] = new_manifest_filename
         return redirect(url_for('success'))
     elif DataStore.total_operations == 0:
+        new_manifest_content = DataStore.ship.generate_manifest_content()
+        new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
+        new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
+        
+        # Save the new manifest to a file
+        with open(new_manifest_path, 'w') as f:
+            f.write(new_manifest_content)
+        
+        # Save the new manifest filename in the session for download
+        session['new_manifest_filename'] = new_manifest_filename
         return redirect(url_for('success'))
 
     if DataStore.num_containers_to_load == 0:
@@ -595,29 +623,38 @@ def transfer_process_on():
 
 def transfer_process_off_cont():
     current_operation = request.args.get("current", 1, type=int)
-    print("in transfer_process_off_cont", file = sys.stderr)
+    print("in transfer_process_off_cont", file=sys.stderr)
 
     if len(DataStore.steps) > 0:
         DataStore.tempContainerArray = copy.deepcopy(DataStore.steps[0])
         print("pop step from off cont")
         DataStore.steps.pop(0)
-        print("remaining steps: " + str(len(DataStore.steps)), file = sys.stderr)
+        print("remaining steps: " + str(len(DataStore.steps)), file=sys.stderr)
+
+        # Update the container being unloaded
+        if DataStore.tempContainerArray:
+            for container in DataStore.tempContainerArray:
+                if container.name != "UNUSED":
+                    print(f"Unloading container: {container.name} at ({container.xPos}, {container.yPos})", file=sys.stderr)
+                    container.name = "UNUSED"
+                    container.weight = "00000"
+
         if len(DataStore.steps) == 0:
-            DataStore.currOpAdded= False
+            DataStore.currOpAdded = False
     else:
         print("changing currOp to false in off cont")
         DataStore.currOpAdded = False
 
     DataStore.prevAction = ""
     return render_template(
-            'TransferProcess.html',
-            ship=DataStore.tempContainerArray,
-            current_operation=DataStore.current_operation,
-            total_operations=DataStore.total_operations,
-            action = DataStore.action,
-            prevAction = DataStore.prevAction,
-            numContRemove = DataStore.num_containers_to_remove
-        )
+        'TransferProcess.html',
+        ship=DataStore.tempContainerArray,
+        current_operation=DataStore.current_operation,
+        total_operations=DataStore.total_operations,
+        action=DataStore.action,
+        prevAction=DataStore.prevAction,
+        numContRemove=DataStore.num_containers_to_remove
+    )
 
 #IMPORTANT KEEP THIS TO HANDLE WHICH CONTAINERS SELECTED
 @app.route('/Transfer-process-changes', methods = ["GET", "POST"])
@@ -664,30 +701,39 @@ def Balance():
         log("Balance algorithm triggered.")
         print("Balance algorithm triggered", file=sys.stderr)
 
-        # Construct the grid from the ship containers
-        ship_grid = []
+        # Initialize grid and metadata
+        ship_grid = [[0 for _ in range(12)] for _ in range(8)]  # 8x12 grid
         metadata = {}
+
+        # Construct the grid and metadata from containers
         for container in DataStore.ship.containers:
             row_idx = container.yPos - 1
             col_idx = container.xPos - 1
+            weight_int = 0  # Default weight for empty spots
 
-            # Ensure the grid has enough rows
-            while len(ship_grid) <= row_idx:
-                ship_grid.append([0] * 12)  # Initialize a 12-column row
-
-            # Populate the grid based on container properties
+            # Populate the grid and metadata
             if container.name == "NAN":
-                ship_grid[row_idx][col_idx] = -1  # NAN is represented as -1
+                ship_grid[row_idx][col_idx] = -1  # NAN represented as -1
             elif container.name == "UNUSED":
                 ship_grid[row_idx][col_idx] = 0  # UNUSED spaces are 0
             else:
-                ship_grid[row_idx][col_idx] = int(container.weight)
+                # Parse weight safely and handle invalid values
+                try:
+                    weight_int = int(container.weight)
+                    ship_grid[row_idx][col_idx] = weight_int
+                except ValueError:
+                    print(
+                        f"Invalid weight '{container.weight}' for container '{container.name}' "
+                        f"at ({row_idx}, {col_idx}).",
+                        file=sys.stderr,
+                    )
+                    weight_int = 0
 
-            # Populate the metadata for each grid location
-            grid_key = f"{len(ship_grid) - row_idx},{col_idx + 1}"
-            metadata[grid_key] = [container.name, int(container.weight)]
+            # Update metadata
+            grid_key = f"{len(ship_grid) - row_idx},{col_idx + 1}"  # Metadata uses 1-based indexing
+            metadata[grid_key] = [container.name, str(weight_int)]
 
-        # Print the constructed grid for debugging
+        # Debugging outputs
         print("Constructed Grid:")
         for row in ship_grid:
             print(row)
@@ -696,20 +742,17 @@ def Balance():
         for key, value in metadata.items():
             print(f"{key}: {value}")
 
-        # Perform the balance algorithm
+        # Run the balance algorithm
         try:
             movements, cost = balance(metadata, ship_grid)
-
-            if not movements:  # Ship is already balanced or cannot be balanced
+            if not movements:
                 return render_template(
                     'Balance.html',
                     ship=DataStore.ship.containers,
-                    movements=[],
-                    cost=cost,
-                    message="The ship is already balanced!" if cost == 0 else "The ship cannot be balanced!"
+                    message="Ship is already balanced!"
                 )
 
-            # Apply movements to the ship containers
+            # Apply movements to the ship
             for move in movements:
                 start_row, start_col, start_weight, start_name = map(str.strip, move.split()[:4])
                 start_row, start_col = int(start_row), int(start_col)
@@ -724,7 +767,7 @@ def Balance():
                 # Update the destination position
                 for container in DataStore.ship.containers:
                     if container.xPos - 1 == end_col and container.yPos - 1 == end_row:
-                        container.weight = f"{int(start_weight):05}"
+                        container.weight = f"{int(start_weight):05}"  # 5-digit padded weight
                         container.name = start_name
 
             save_state()
@@ -736,13 +779,20 @@ def Balance():
                 cost=cost,
                 message="Balance algorithm completed successfully!"
             )
+
         except Exception as e:
             print(f"Error during balance computation: {e}", file=sys.stderr)
             return render_template('Error.html', error=f"Balance algorithm failed: {e}")
 
-    # Render the initial balance page
+    # Render the balance page initially
     return render_template('Balance.html', ship=DataStore.ship.containers)
 
+
+
+@app.route('/get_movements', methods=["GET"])
+def get_movements():
+    movements = session.get('movements', [])
+    return jsonify({"movements": movements})
 
 @app.route('/typeFile', methods=['GET', 'POST'])
 def fileUpload():
@@ -798,6 +848,7 @@ def log_comment():
 
 @app.route('/Success', methods=["GET"])
 def success():
+    new_manifest_filename = session.get('new_manifest_filename', None)
     return render_template('Success.html')
 
 if __name__ == "__main__":
