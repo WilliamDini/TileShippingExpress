@@ -15,7 +15,8 @@ import copy
 
 app = Flask(__name__)
 app.secret_key = 'DrKeoghRocks'
-log_file = 'KeoghsPort2024.txt'
+current_year = datetime.now().year
+log_file = f"KeoghsPort{datetime.now().year}.txt"
 state_file = 'program_state.pkl'
 STATE_FILE = "test_state.pkl"
 class DataStore():
@@ -44,6 +45,7 @@ class DataStore():
     currOpAdded = False
     balanceEnd = False
     balanceCost = 0
+    TransferCost = 0
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -477,7 +479,8 @@ def transfer_process_init():
             action=DataStore.action,
             prevAction=DataStore.prevAction,
             numContRemove=DataStore.num_containers_to_remove,
-            numLoad=DataStore.num_containers_to_load
+            numLoad=DataStore.num_containers_to_load,
+            cost=len(DataStore.masterPathArray)
         )
 
 def transfer_process_on():
@@ -500,7 +503,8 @@ def transfer_process_on():
                 error="Name and weight are required.",
                 prevAction = DataStore.prevAction,
                 numContRemove = DataStore.num_containers_to_remove,
-                numLoad = DataStore.num_containers_to_load
+                numLoad = DataStore.num_containers_to_load,
+                cost=len(DataStore.masterPathArray)
             )
         try:
             restricted_names = {"NAN", "UNUSED"}
@@ -516,7 +520,8 @@ def transfer_process_on():
                 error=str(e),
                 prevAction=DataStore.prevAction,
                 numContRemove=DataStore.num_containers_to_remove,
-                numLoad=DataStore.num_containers_to_load
+                numLoad=DataStore.num_containers_to_load,
+                cost=len(DataStore.masterPathArray)
             )
         try:
             container_weight = float(container_weight)  
@@ -531,7 +536,8 @@ def transfer_process_on():
                 error="Weight must be a valid number.",
                 prevAction = DataStore.prevAction,
                 numContRemove = DataStore.num_containers_to_remove,
-                numLoad = DataStore.num_containers_to_load
+                numLoad = DataStore.num_containers_to_load,
+                cost=len(DataStore.masterPathArray)
             )
 
         if container_weight < 0:
@@ -604,7 +610,8 @@ def transfer_process_on():
             action = DataStore.action,
             prevAction = DataStore.prevAction,
             numContRemove = DataStore.num_containers_to_remove,
-            numLoad = DataStore.num_containers_to_load
+            numLoad = DataStore.num_containers_to_load,
+            cost=len(DataStore.masterPathArray)
         )
     
     DataStore.loadContinue = 0
@@ -617,7 +624,8 @@ def transfer_process_on():
         action = DataStore.action,
         prevAction = DataStore.prevAction,
         numContRemove = DataStore.num_containers_to_remove,
-        numLoad = DataStore.num_containers_to_load
+        numLoad = DataStore.num_containers_to_load,
+        cost=len(DataStore.masterPathArray)
     )
 
 def transfer_process_off_cont():
@@ -653,7 +661,8 @@ def transfer_process_off_cont():
         total_operations=DataStore.total_operations,
         action=DataStore.action,
         prevAction=DataStore.prevAction,
-        numContRemove=DataStore.num_containers_to_remove
+        numContRemove=DataStore.num_containers_to_remove,
+        cost = len(DataStore.masterPathArray)
     )
 
 #IMPORTANT KEEP THIS TO HANDLE WHICH CONTAINERS SELECTED
@@ -890,8 +899,33 @@ def download_manifest():
         return send_file(file_path, as_attachment=True)
     else:
         return "Manifest file not found on server.", 404
+    
+@app.route('/log', methods=['GET'])
+def view_log():
+    log_file_path = f"KeoghsPort{current_year}.txt"  
+    try:
+        with open(log_file_path, 'r') as log_file:
+            log_content = log_file.read()
+        return render_template('log.html', log_content=log_content)
+    except FileNotFoundError:
+        return render_template('log.html', error="Log file not found.")
+    except Exception as e:
+        return render_template('log.html', error=f"An error occurred: {e}")
 
-
+@app.route('/download-log')
+def download_log():
+    log_file = f"KeoghsPort{current_year}.txt" 
+    try:
+        return send_file(
+            log_file,
+            as_attachment=True,
+            download_name=f"KeoghsPort{current_year}.txt",
+            mimetype='text/plain'
+        )
+    except Exception as e:
+        print(f"Error during log file download: {e}", file=sys.stderr)
+        return render_template('Error.html', error="Failed to download the log file.")
+    
 @app.route('/Success', methods=["GET"])
 def success():
     new_manifest_filename = session.get('new_manifest_filename', None)
