@@ -45,6 +45,7 @@ class DataStore():
     currOpAdded = False
     balanceEnd = False
     balanceCost = 0
+    TransferCost = 0
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -478,7 +479,8 @@ def transfer_process_init():
             action=DataStore.action,
             prevAction=DataStore.prevAction,
             numContRemove=DataStore.num_containers_to_remove,
-            numLoad=DataStore.num_containers_to_load
+            numLoad=DataStore.num_containers_to_load,
+            cost=len(DataStore.masterPathArray)
         )
 
 def transfer_process_on():
@@ -501,7 +503,8 @@ def transfer_process_on():
                 error="Name and weight are required.",
                 prevAction = DataStore.prevAction,
                 numContRemove = DataStore.num_containers_to_remove,
-                numLoad = DataStore.num_containers_to_load
+                numLoad = DataStore.num_containers_to_load,
+                cost=len(DataStore.masterPathArray)
             )
         try:
             restricted_names = {"NAN", "UNUSED"}
@@ -517,7 +520,8 @@ def transfer_process_on():
                 error=str(e),
                 prevAction=DataStore.prevAction,
                 numContRemove=DataStore.num_containers_to_remove,
-                numLoad=DataStore.num_containers_to_load
+                numLoad=DataStore.num_containers_to_load,
+                cost=len(DataStore.masterPathArray)
             )
         try:
             container_weight = float(container_weight)  
@@ -532,7 +536,8 @@ def transfer_process_on():
                 error="Weight must be a valid number.",
                 prevAction = DataStore.prevAction,
                 numContRemove = DataStore.num_containers_to_remove,
-                numLoad = DataStore.num_containers_to_load
+                numLoad = DataStore.num_containers_to_load,
+                cost=len(DataStore.masterPathArray)
             )
 
         if container_weight < 0:
@@ -605,7 +610,8 @@ def transfer_process_on():
             action = DataStore.action,
             prevAction = DataStore.prevAction,
             numContRemove = DataStore.num_containers_to_remove,
-            numLoad = DataStore.num_containers_to_load
+            numLoad = DataStore.num_containers_to_load,
+            cost=len(DataStore.masterPathArray)
         )
     
     DataStore.loadContinue = 0
@@ -618,7 +624,8 @@ def transfer_process_on():
         action = DataStore.action,
         prevAction = DataStore.prevAction,
         numContRemove = DataStore.num_containers_to_remove,
-        numLoad = DataStore.num_containers_to_load
+        numLoad = DataStore.num_containers_to_load,
+        cost=len(DataStore.masterPathArray)
     )
 
 def transfer_process_off_cont():
@@ -654,7 +661,8 @@ def transfer_process_off_cont():
         total_operations=DataStore.total_operations,
         action=DataStore.action,
         prevAction=DataStore.prevAction,
-        numContRemove=DataStore.num_containers_to_remove
+        numContRemove=DataStore.num_containers_to_remove,
+        cost = len(DataStore.masterPathArray)
     )
 
 #IMPORTANT KEEP THIS TO HANDLE WHICH CONTAINERS SELECTED

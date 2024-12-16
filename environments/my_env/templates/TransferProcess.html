@@ -12,6 +12,8 @@
 
     <h1 class="page-title">Transfer Process</h1>
     <p class="operation-status">Operation {{ current_operation }} of {{ total_operations }}</p>
+    <p style="text-align: center;">Estimated Time for Operation: {{ cost }} minutes</p>
+
     <div class="grid-container">
         {% for container in ship %}
         <div id="{{ container.id }}_{{ container.name }}" 
