@@ -180,9 +180,19 @@ def getAllGridSpotsSift(grid):
 def sift(grid,conts,movs,r):
     cost = 0
     cons = getContainers(grid)
+
+    print("get containers passed")
+
     goalSpots = getGoals(grid)  # All goals spots in from left to right
+
+    print("get Goals")
     sorted_weight = sorted(cons, reverse=True, key=lambda x: x[0]) # [Weight] = Position(x,y)
+
+    print("get sorted")
     weights = []
+
+    print("after initially in sift")
+
     for w in sorted_weight:
         weights.append(w[0])
     
@@ -190,6 +200,7 @@ def sift(grid,conts,movs,r):
     # go in for loop to find container that matches weight, if len is more than 1 (theres duplicate),
     # check each coords until you find matching cords of blocked container that was just moved. once found
     # update coords
+
 
     for weight in weights:
         cons = getContainers(grid)
@@ -216,6 +227,7 @@ def sift(grid,conts,movs,r):
                 temp = grid[pos[0]][pos[1]] 
                 grid[pos[0]][pos[1]] = 0
                 grid[goalPos[0]][goalPos[1]] = temp
+    print("after weight")
     return cost
 
 def siftBlock(grid,i,j,movs,r,sw): #i,j = loc of block container
@@ -467,12 +479,18 @@ def balance(r,grid):
             movements = []
             print("Ship cannot be balanced. Begin Sift operation!")
             cost = sift(gridcpy,contcpy,movements,rcpy)
+            print("sift passed")
             return movements,cost
         codeCoords = getCCoord(grid)  
+        print("getCCoord parst")
+
         currContainer = []
         currVals = []
         lhs, rhs, isBalanced = calculate_balance(grid)
         #Check Max Iteration
+
+        print("after calculate balance")
+
 
         #Pick Side to Start on
         if lhs > rhs:
