@@ -326,7 +326,7 @@ def transfer_process_init():
     print("num cont to Load " + str(DataStore.num_containers_to_load))
     moveTo = request.args.get("moveTo")
     DataStore.current_operation = request.args.get("current", type=int)
-    
+     
     if DataStore.current_operation is None:
         DataStore.current_operation = 1
 
@@ -353,6 +353,7 @@ def transfer_process_init():
         if DataStore.current_operation < DataStore.total_operations:
             DataStore.current_operation += 1
 
+    print("load continue value: " + str(DataStore.loadContinue))
     print("current operation: " + str(DataStore.current_operation) + " out of " + str(DataStore.total_operations))
     if (DataStore.current_operation == DataStore.total_operations and len(DataStore.steps) == 0 and DataStore.num_containers_to_load == 0 and DataStore.num_containers_to_remove == 0) or DataStore.current_operation > DataStore.total_operations:
         DataStore.ship.containers = copy.deepcopy(DataStore.tempContainerArray)
@@ -664,12 +665,12 @@ def transfer_process_off_cont():
         print("remaining steps: " + str(len(DataStore.steps)), file=sys.stderr)
 
         # Update the container being unloaded
-        if DataStore.tempContainerArray:
-            for container in DataStore.tempContainerArray:
-                if container.name != "UNUSED":
-                    print(f"Unloading container: {container.name} at ({container.xPos}, {container.yPos})", file=sys.stderr)
-                    container.name = "UNUSED"
-                    container.weight = "00000"
+        # if DataStore.tempContainerArray:
+        #     for container in DataStore.tempContainerArray:
+        #         if container.name != "UNUSED":
+        #             print(f"Unloading container: {container.name} at ({container.xPos}, {container.yPos})", file=sys.stderr)
+        #             container.name = "UNUSED"
+        #             container.weight = "00000"
 
         if len(DataStore.steps) == 0:
             DataStore.currOpAdded = False
@@ -677,6 +678,7 @@ def transfer_process_off_cont():
         print("changing currOp to false in off cont")
         DataStore.currOpAdded = False
 
+    DataStore.current_operation
     DataStore.prevAction = ""
     return render_template(
         'TransferProcess.html',
@@ -763,7 +765,10 @@ def Balance():
         r, g = readFileInput(DataStore.fileName)
 
         try:
-            movements, cost = balance(r, g)
+
+            r,g = readFileInput(DataStore.fileName)
+            movements, cost = balance(r, g) #problem?
+    
             movements.reverse()
             DataStore.balanceCost = cost
 
@@ -804,9 +809,13 @@ def Balance():
             print(f"Metadata: {r}", file=sys.stderr)
             print(f"Ship Grid: {g}", file=sys.stderr)
             return render_template('Error.html', error=f"Balance algorithm failed: {e}")
-
-    return render_template('Balance.html', ship=DataStore.ship.containers, action="start")
-
+    
+    # Render the initial balance page
+    return render_template('Balance.html', 
+                           ship=DataStore.ship.containers,
+                           current_operation = DataStore.current_operation,
+                           cost = DataStore.balanceCost,
+                           action = "start")
 
 def balance_process_cont():
     print("In balance_process_cont", file=sys.stderr)
