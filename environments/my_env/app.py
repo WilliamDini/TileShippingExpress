@@ -45,6 +45,7 @@ class DataStore():
     currOpAdded = False
     balanceEnd = False
     balanceCost = 0
+    TransferCost = 0
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -477,7 +478,8 @@ def transfer_process_init():
             action=DataStore.action,
             prevAction=DataStore.prevAction,
             numContRemove=DataStore.num_containers_to_remove,
-            numLoad=DataStore.num_containers_to_load
+            numLoad=DataStore.num_containers_to_load,
+            cost=len(DataStore.masterPathArray)
         )
 
 def transfer_process_on():
@@ -500,7 +502,8 @@ def transfer_process_on():
                 error="Name and weight are required.",
                 prevAction = DataStore.prevAction,
                 numContRemove = DataStore.num_containers_to_remove,
-                numLoad = DataStore.num_containers_to_load
+                numLoad = DataStore.num_containers_to_load,
+                cost=len(DataStore.masterPathArray)
             )
         try:
             restricted_names = {"NAN", "UNUSED"}
@@ -516,7 +519,8 @@ def transfer_process_on():
                 error=str(e),
                 prevAction=DataStore.prevAction,
                 numContRemove=DataStore.num_containers_to_remove,
-                numLoad=DataStore.num_containers_to_load
+                numLoad=DataStore.num_containers_to_load,
+                cost=len(DataStore.masterPathArray)
             )
         try:
             container_weight = float(container_weight)  
@@ -531,7 +535,8 @@ def transfer_process_on():
                 error="Weight must be a valid number.",
                 prevAction = DataStore.prevAction,
                 numContRemove = DataStore.num_containers_to_remove,
-                numLoad = DataStore.num_containers_to_load
+                numLoad = DataStore.num_containers_to_load,
+                cost=len(DataStore.masterPathArray)
             )
 
         if container_weight < 0:
@@ -604,7 +609,8 @@ def transfer_process_on():
             action = DataStore.action,
             prevAction = DataStore.prevAction,
             numContRemove = DataStore.num_containers_to_remove,
-            numLoad = DataStore.num_containers_to_load
+            numLoad = DataStore.num_containers_to_load,
+            cost=len(DataStore.masterPathArray)
         )
     
     DataStore.loadContinue = 0
@@ -617,7 +623,8 @@ def transfer_process_on():
         action = DataStore.action,
         prevAction = DataStore.prevAction,
         numContRemove = DataStore.num_containers_to_remove,
-        numLoad = DataStore.num_containers_to_load
+        numLoad = DataStore.num_containers_to_load,
+        cost=len(DataStore.masterPathArray)
     )
 
 def transfer_process_off_cont():
@@ -653,7 +660,8 @@ def transfer_process_off_cont():
         total_operations=DataStore.total_operations,
         action=DataStore.action,
         prevAction=DataStore.prevAction,
-        numContRemove=DataStore.num_containers_to_remove
+        numContRemove=DataStore.num_containers_to_remove,
+        cost = len(DataStore.masterPathArray)
     )
 
 #IMPORTANT KEEP THIS TO HANDLE WHICH CONTAINERS SELECTED
@@ -732,7 +740,6 @@ def Balance():
         r, g = readFileInput(DataStore.fileName)
 
         try:
-
             r,g = readFileInput(DataStore.fileName)
             movements, cost = balance(r, g) #problem?
     
@@ -740,7 +747,16 @@ def Balance():
             DataStore.balanceCost = cost
 
             # Reorder movements if needed
-            moveInOrder = sorted(movements, key=lambda x: x.split()[3] == "UNUSED", reverse=True)
+            index = 0
+            moveInOrder = []
+            for element in movements:
+                temp = element.split()
+                if(temp[3] == "UNUSED"):
+                    moveInOrder.insert(index, element)
+                    index += 1
+                else:
+                    moveInOrder.insert(index, element)
+                    index = 0
 
             if not movements:
                 return render_template(
@@ -754,21 +770,25 @@ def Balance():
                 DataStore.problem = Problem(DataStore.tempContainerArray)
                 DataStore.problem.loadNestedContainers()
                 DataStore.steps = DataStore.problem.returnPathArray(moveInOrder)
+                print("after steps")
+                print(len(DataStore.steps))
                 DataStore.tempContainerArray = copy.deepcopy(DataStore.steps[0])
+                print("pop step from init")
                 DataStore.steps.pop(0)
-
+            
             if len(DataStore.steps) == 0:
-                DataStore.action = "end"
+                DataStore.action == "end"
                 DataStore.balanceEnd = True
             else:
-                DataStore.action = "continue"
-
+                DataStore.action == "continue"
             return render_template(
                 'Balance.html',
                 ship=DataStore.tempContainerArray,
+                current_operation=DataStore.current_operation,
+                total_operations=DataStore.total_operations,
                 movements=movements,
                 cost=DataStore.balanceCost,
-                action=DataStore.action,
+                action = DataStore.action,
                 message="Balance algorithm completed successfully!"
             )
         except Exception as e:
@@ -788,42 +808,29 @@ def balance_process_cont():
     print("In balance_process_cont", file=sys.stderr)
     if len(DataStore.steps) > 0:
         DataStore.tempContainerArray = copy.deepcopy(DataStore.steps[0])
+        print("pop step from balance cont")
         DataStore.steps.pop(0)
+        print("remaining steps: " + str(len(DataStore.steps)), file = sys.stderr)
     else:
-        print("No steps remaining.", file=sys.stderr)
+        print("no steps")
 
     if len(DataStore.steps) == 0:
         DataStore.action = "end"
         DataStore.balanceEnd = True
+    else:
+        DataStore.action = "continue"
 
-        # Save the final state and generate the manifest
-        DataStore.ship.containers = copy.deepcopy(DataStore.tempContainerArray)
-        new_manifest_content = DataStore.ship.generate_manifest_content()
-        new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
-        log(f"Balance service completed. Updated manifest saved to  {new_manifest_filename}")
-        new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
+    print(DataStore.action)
 
-        try:
-            with open(new_manifest_path, 'w') as f:
-                f.write(new_manifest_content)
-
-            print(f"Manifest successfully generated at {new_manifest_path}", file=sys.stderr)
-            session['new_manifest_filename'] = new_manifest_filename
-        except Exception as e:
-            print(f"Error saving manifest file: {e}", file=sys.stderr)
-            return render_template('Error.html', error=f"Failed to save manifest: {e}")
-
-        return redirect(url_for('success'))
-
-    DataStore.action = "continue"
     return render_template(
-        'Balance.html',
-        ship=DataStore.tempContainerArray,
-        action=DataStore.action,
-        cost=DataStore.balanceCost,
-        message="Continuing algorithm"
-    )
-
+            'Balance.html',
+            ship=DataStore.tempContainerArray,
+            current_operation=DataStore.current_operation,
+            total_operations=DataStore.total_operations,
+            action = str(DataStore.action),
+            cost = DataStore.balanceCost,
+            message = "Continuing algorithm"
+        )
 
 @app.route('/get_movements', methods=["GET"])
 def get_movements():

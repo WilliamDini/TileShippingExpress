@@ -201,25 +201,34 @@ def sift(grid,conts,movs,r):
     # check each coords until you find matching cords of blocked container that was just moved. once found
     # update coords
 
-
+    print("after weights append")
     for weight in weights:
         cons = getContainers(grid)
+        print("after get containers")
         pos = [sorted_weight[0][1][0],sorted_weight[0][1][1]] # Get position of heaviest container
         sorted_weight.pop(0)
         goalPos = goalSpots.pop(0)
+
+        print("after pop")
         if weight == grid[goalPos[0]][goalPos[1]] : # Check if it was already moved
             continue
         else:   # Container has not been moved!!!!
             # check if blocked
             if (grid[goalPos[0]][goalPos[1]]) != 0 and grid[goalPos[0]][goalPos[1]] != -1:
+                print("in grid conditional")
                 tempRow = 0
                 tempcon = grid[tempRow][goalPos[1]] # Container in col of container to move that is blocking goal spot
+                print("in grid tempasdf")
                 while tempRow < len(grid) and tempcon == 0:   # While temprow < 8 and we are in empty con
                     tempRow += 1
                     tempcon = grid[tempRow][goalPos[1]]
+                    print("in temprow while")
                 tempcon = grid[tempRow][goalPos[1]] # Container in col of container to move that is blocking goal spot
+                print("in tempcon")
                 cost += siftBlock(grid,tempRow,goalPos[1],movs,r,sorted_weight)  # Potentially move container
+                print("after sift block")
                 cost += calcCost(grid,pos[0],pos[1],goalPos[0],goalPos[1],movs,r)
+                print("after sift and calc cost")
                 temp = grid[pos[0]][pos[1]] 
                 grid[pos[0]][pos[1]] = 0
                 grid[goalPos[0]][goalPos[1]] = temp
@@ -445,11 +454,11 @@ def balance(r,grid):
     
     if not isinstance(grid, list):
         raise TypeError("grid should be a list")
-    gridcpy = grid.copy()
+    gridcpy = c.deepcopy(grid)
     
     if not isinstance(r, dict):
         raise TypeError("r should be a dictionary")
-    rcpy = r.copy()
+    rcpy = c.deepcopy(r)
     
     contcpy = {}
     containers = {}
