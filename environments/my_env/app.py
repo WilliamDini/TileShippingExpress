@@ -282,9 +282,9 @@ def transfer_process():
         if container_weight < 0:
             print(f"Negative weight ({container_weight}) entered. Adjusting to 0.", file=sys.stderr)
             container_weight = 0  
-        elif container_weight > 9999:
-            print(f"Weight ({container_weight}) exceeds 9999. Adjusting to 9999.", file=sys.stderr)
-            container_weight = 9999 
+        elif container_weight > 99999:
+            print(f"Weight ({container_weight}) exceeds 99999. Adjusting to 99999.", file=sys.stderr)
+            container_weight = 99999
         else:
             container_weight = round(container_weight) 
 
@@ -579,14 +579,17 @@ def transfer_process_on():
         elif container_weight > 99999:
             print(f"Weight ({container_weight}) exceeds 99999. Adjusting to 99999.", file=sys.stderr)
             container_weight = 99999 
+            print
         else:
             container_weight = round(container_weight) 
 
-        if len(str(container_weight)) < 5:
+        if len(str(container_weight)) <= 5:
             contString = copy.deepcopy(str(container_weight))
             for i in range(5 - len(str(container_weight))):
                 contString = "0" + contString
-
+        elif len(str(container_weight)) > 5:
+            print(f"Error with container weight: {e}", file=sys.stderr)
+            return render_template(Error.html, error=f"Error with container weight: {e}")
         print(len(DataStore.tempContainerArray))
         if len(DataStore.tempContainerArray) > 0:
             for i in range(len(DataStore.tempContainerArray)):
@@ -595,7 +598,7 @@ def transfer_process_on():
                     DataStore.tempContainerArray[i].name = "UNUSED"
                     DataStore.tempContainerArray[i].weight = "00000"
 
-        print(contString + " " + container_name)
+        # print(contString + " " + container_name)
 
         DataStore.problem.shipContainers = copy.deepcopy(DataStore.tempContainerArray)
         DataStore.transfer.nestedArray[0][0].name = "UNUSED"
