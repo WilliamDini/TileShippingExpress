@@ -15,7 +15,8 @@ import copy
 
 app = Flask(__name__)
 app.secret_key = 'DrKeoghRocks'
-log_file = 'KeoghsPort2024.txt'
+current_year = datetime.now().year
+log_file = f"KeoghsPort{datetime.now().year}.txt"
 state_file = 'program_state.pkl'
 STATE_FILE = "test_state.pkl"
 class DataStore():
@@ -891,8 +892,33 @@ def download_manifest():
         return send_file(file_path, as_attachment=True)
     else:
         return "Manifest file not found on server.", 404
+    
+@app.route('/log', methods=['GET'])
+def view_log():
+    log_file_path = f"KeoghsPort{current_year}.txt"  
+    try:
+        with open(log_file_path, 'r') as log_file:
+            log_content = log_file.read()
+        return render_template('log.html', log_content=log_content)
+    except FileNotFoundError:
+        return render_template('log.html', error="Log file not found.")
+    except Exception as e:
+        return render_template('log.html', error=f"An error occurred: {e}")
 
-
+@app.route('/download-log')
+def download_log():
+    log_file = f"KeoghsPort{current_year}.txt" 
+    try:
+        return send_file(
+            log_file,
+            as_attachment=True,
+            download_name=f"KeoghsPort{current_year}.txt",
+            mimetype='text/plain'
+        )
+    except Exception as e:
+        print(f"Error during log file download: {e}", file=sys.stderr)
+        return render_template('Error.html', error="Failed to download the log file.")
+    
 @app.route('/Success', methods=["GET"])
 def success():
     new_manifest_filename = session.get('new_manifest_filename', None)

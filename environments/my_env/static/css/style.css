@@ -149,3 +149,9 @@
     display: none; 
     font-size: 14px; 
 }
+
+.log-button-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+}
