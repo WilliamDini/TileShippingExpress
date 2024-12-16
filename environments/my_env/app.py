@@ -15,7 +15,7 @@ import copy
 
 app = Flask(__name__)
 app.secret_key = 'DrKeoghRocks'
-log_file = 'logfile.log'
+log_file = 'KeoghsPort2024'
 state_file = 'program_state.pkl'
 STATE_FILE = "test_state.pkl"
 class DataStore():
@@ -556,7 +556,22 @@ def transfer_process_on():
                 numContRemove = DataStore.num_containers_to_remove,
                 numLoad = DataStore.num_containers_to_load
             )
-
+        try:
+            restricted_names = {"NAN", "UNUSED"}
+            if container_name in restricted_names:
+                raise ValueError("Container name cannot be 'NAN' or 'UNUSED'.")
+        except ValueError as e:
+            return render_template(
+                'TransferProcess.html',
+                ship=DataStore.tempContainerArray,
+                current_operation=DataStore.current_operation,
+                total_operations=DataStore.total_operations,
+                action=DataStore.action,
+                error=str(e),
+                prevAction=DataStore.prevAction,
+                numContRemove=DataStore.num_containers_to_remove,
+                numLoad=DataStore.num_containers_to_load
+            )
         try:
             container_weight = float(container_weight)  
         except ValueError:
