@@ -306,6 +306,7 @@ def transfer_process_init():
         DataStore.ship.containers = copy.deepcopy(DataStore.tempContainerArray)
         new_manifest_content = DataStore.ship.generate_manifest_content()
         new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
+        log("Transfer service completed in " + str(len(DataStore.masterPathArray)) + " minutes.")
         log(f"Transfer service completed. Updated manifest saved to  {new_manifest_filename}")
         new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
         
@@ -318,6 +319,7 @@ def transfer_process_init():
         DataStore.ship.containers = copy.deepcopy(DataStore.tempContainerArray)
         new_manifest_content = DataStore.ship.generate_manifest_content()
         new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
+        log("Transfer service completed in " + str(len(DataStore.masterPathArray)) + " minutes.")
         log(f"Transfer service completed. Updated manifest saved to  {new_manifest_filename}")
         new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
         
@@ -713,7 +715,7 @@ def Balance():
         DataStore.ship.containers = copy.deepcopy(DataStore.tempContainerArray)
         new_manifest_content = DataStore.ship.generate_manifest_content()
         new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
-        log("Manifest service completed in " + str(DataStore.balanceCost) + " minutes.")
+        log("Balance service completed in " + str(DataStore.balanceCost) + " minutes.")
         log(f"Balance service completed. Updated manifest saved to  {new_manifest_filename}")
         new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
 
