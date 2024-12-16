@@ -152,6 +152,32 @@ def Login():
 
 @app.route('/Dashboard', methods = ["GET", "POST"])
 def Dashboard():
+    DataStore.selectOption = "not set"
+    DataStore.ship = Ship()
+    DataStore.fileName = "not set"
+    DataStore.shipChanges = []
+    DataStore.problem = None
+    DataStore.transfer = None
+    DataStore.manifest_content = None
+    DataStore.contOffArr = []
+    DataStore.action = ""
+    DataStore.masterPathArray = []
+    DataStore.steps = []
+    DataStore.current_operation = 0
+    DataStore.total_operations = 0
+    DataStore.num_containers_to_load = 0
+    DataStore.num_containers_to_remove = 0
+    DataStore.tempContainerArray = []
+    DataStore.iteration = 1
+    DataStore.prevAction = ""
+    DataStore.noLoadLeft = 0
+    DataStore.loadContinue = 0
+    DataStore.prevMove = 0
+    DataStore.moveOffLeft = 0
+    DataStore.currOpAdded = False
+    DataStore.balanceEnd = False
+    DataStore.balanceCost = 0
+
     if request.method == "POST":
         user = request.form.get('user', 'Guest') 
         session['user'] = user 
@@ -758,6 +784,12 @@ def Balance():
                 DataStore.tempContainerArray = copy.deepcopy(DataStore.steps[0])
                 print("pop step from init")
                 DataStore.steps.pop(0)
+            
+            if len(DataStore.steps) == 0:
+                DataStore.action == "end"
+                DataStore.balanceEnd = True
+            else:
+                DataStore.action == "continue"
 
             return render_template(
                 'Balance.html',
@@ -766,7 +798,7 @@ def Balance():
                 total_operations=DataStore.total_operations,
                 movements=movements,
                 cost=DataStore.balanceCost,
-                action = "continue",
+                action = DataStore.action,
                 message="Balance algorithm completed successfully!"
             )
 

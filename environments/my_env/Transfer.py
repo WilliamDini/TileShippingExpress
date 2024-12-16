@@ -8,6 +8,7 @@ import copy
 import re
 import time
 import copy
+import itertools
 
 check = 0
 
@@ -101,13 +102,29 @@ class Problem():
     def returnPathArray(self, path):
         # print(path)
         steps = []
-        # print("in returnPathArray")
+        print("in returnPathArray")
         arrayOfSteps = []
         arrayOfOps = []
+        for element in path:
+            print(element)
         for x in path:
             temp = x.split()
-            arrayOfSteps.append(temp)
-            #print(temp)
+            if len(temp) > 4:
+                longName = []
+                for i in range(3, len(temp)):
+                    print(temp[i])
+                    longName.append(temp[i])
+                    newName = " ".join(longName)
+
+                print(newName)
+                for i in range(3, len(temp)):
+                    temp.pop()
+                print(temp)
+                temp.append(newName)
+                arrayOfSteps.append(temp)
+            else:    
+                arrayOfSteps.append(temp)
+            print(temp)
         print(arrayOfSteps)
 
         temp = []
