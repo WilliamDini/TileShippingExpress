@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, session, g
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session, g, send_file
 import sys
 from grid import *
 from Transfer import *
@@ -358,6 +358,7 @@ def transfer_process_init():
         DataStore.ship.containers = copy.deepcopy(DataStore.tempContainerArray)
         new_manifest_content = DataStore.ship.generate_manifest_content()
         new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
+        log(f"Manifest file generated: {new_manifest_filename}")
         new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
         
         with open(new_manifest_path, 'w') as f:
@@ -369,6 +370,7 @@ def transfer_process_init():
         DataStore.ship.containers = copy.deepcopy(DataStore.tempContainerArray)
         new_manifest_content = DataStore.ship.generate_manifest_content()
         new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
+        log(f"Manifest file generated: {new_manifest_filename}")
         new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
         
         # Save the new manifest to a file
@@ -735,6 +737,7 @@ def Balance():
         DataStore.ship.containers = copy.deepcopy(DataStore.tempContainerArray)
         new_manifest_content = DataStore.ship.generate_manifest_content()
         new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
+        log(f"Manifest file generated: {new_manifest_filename}")
         new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
 
         try:
@@ -821,6 +824,7 @@ def balance_process_cont():
         DataStore.ship.containers = copy.deepcopy(DataStore.tempContainerArray)
         new_manifest_content = DataStore.ship.generate_manifest_content()
         new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
+        log(f"Manifest file generated: {new_manifest_filename}")
         new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
 
         try:
@@ -901,6 +905,17 @@ def log_comment():
         return jsonify({"status": "success", "message": "Comment logged successfully"})
     return jsonify({"status": "error", "message": "No comment provided."}), 400
 
+@app.route('/download-manifest')
+def download_manifest():
+    new_manifest_filename = session.get('new_manifest_filename')
+    if not new_manifest_filename:
+        return "Manifest file not found.", 404
+
+    file_path = os.path.join(app.root_path, new_manifest_filename)
+    if os.path.exists(file_path):
+        return send_file(file_path, as_attachment=True)
+    else:
+        return "Manifest file not found on server.", 404
 
 
 @app.route('/Success', methods=["GET"])
