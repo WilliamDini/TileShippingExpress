@@ -730,41 +730,43 @@ def Balance():
     if len(DataStore.steps) > 0:
         return balance_process_cont()
 
-    if len(DataStore.steps) == 0 and DataStore.balanceEnd == True:
+    if len(DataStore.steps) == 0 and DataStore.balanceEnd:
+        # Ensure the latest ship state is saved
+        DataStore.ship.containers = copy.deepcopy(DataStore.tempContainerArray)
+        new_manifest_content = DataStore.ship.generate_manifest_content()
+        new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
+        new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
+
+        try:
+            # Write the manifest file
+            with open(new_manifest_path, 'w') as f:
+                f.write(new_manifest_content)
+
+            print(f"Manifest successfully generated at {new_manifest_path}", file=sys.stderr)
+            session['new_manifest_filename'] = new_manifest_filename
+        except Exception as e:
+            print(f"Error saving manifest file: {e}", file=sys.stderr)
+            return render_template('Error.html', error=f"Failed to save manifest: {e}")
+
         return redirect(url_for('success'))
 
     if request.method == "POST":
-        if(request.args.get("moveTo") == "next") and len(DataStore.steps) > 0:
+        if request.args.get("moveTo") == "next" and len(DataStore.steps) > 0:
             print("continuing steps")
             return balance_process_cont()
-            
+
         log("Balance algorithm triggered.")
         print("Balance algorithm triggered", file=sys.stderr)
+        r, g = readFileInput(DataStore.fileName)
 
         try:
-            movements, cost = balance(r, g) #problem?
+            movements, cost = balance(r, g)
             movements.reverse()
-            
             DataStore.balanceCost = cost
 
-            index = 0
-            moveInOrder = []
-            for element in movements:
-                temp = element.split()
-                if(temp[3] == "UNUSED"):
-                    moveInOrder.insert(index, element)
-                    index += 1
-                else:
-                    moveInOrder.insert(index, element)
-                    index = 0
+            # Reorder movements if needed
+            moveInOrder = sorted(movements, key=lambda x: x.split()[3] == "UNUSED", reverse=True)
 
-            print("correct order")
-            for element in moveInOrder:
-                print(element)
-
-            print("reversed order")
-            for element in movements:
-                print(element)
             if not movements:
                 return render_template(
                     'Balance.html',
@@ -772,76 +774,75 @@ def Balance():
                     message="Ship is already balanced!"
                 )
 
-            for element in movements:
-                print(type(element))
             if len(DataStore.steps) == 0:
                 DataStore.tempContainerArray = copy.deepcopy(DataStore.ship.containers)
                 DataStore.problem = Problem(DataStore.tempContainerArray)
                 DataStore.problem.loadNestedContainers()
                 DataStore.steps = DataStore.problem.returnPathArray(moveInOrder)
-                print("after steps")
-                print(len(DataStore.steps))
                 DataStore.tempContainerArray = copy.deepcopy(DataStore.steps[0])
-                print("pop step from init")
                 DataStore.steps.pop(0)
-            
+
             if len(DataStore.steps) == 0:
-                DataStore.action == "end"
+                DataStore.action = "end"
                 DataStore.balanceEnd = True
             else:
-                DataStore.action == "continue"
+                DataStore.action = "continue"
 
             return render_template(
                 'Balance.html',
                 ship=DataStore.tempContainerArray,
-                current_operation=DataStore.current_operation,
-                total_operations=DataStore.total_operations,
                 movements=movements,
                 cost=DataStore.balanceCost,
-                action = DataStore.action,
+                action=DataStore.action,
                 message="Balance algorithm completed successfully!"
             )
-
         except Exception as e:
             print(f"Error during balance computation: {e}", file=sys.stderr)
             print(f"Metadata: {r}", file=sys.stderr)
             print(f"Ship Grid: {g}", file=sys.stderr)
             return render_template('Error.html', error=f"Balance algorithm failed: {e}")
 
-    # Render the initial balance page
-    return render_template('Balance.html', 
-                           ship=DataStore.ship.containers,
-                           current_operation = DataStore.current_operation,
-                           cost = DataStore.balanceCost,
-                           action = "start")
+    return render_template('Balance.html', ship=DataStore.ship.containers, action="start")
+
 
 def balance_process_cont():
-    print("in balance process cont")
+    print("In balance_process_cont", file=sys.stderr)
     if len(DataStore.steps) > 0:
         DataStore.tempContainerArray = copy.deepcopy(DataStore.steps[0])
-        print("pop step from balance cont")
         DataStore.steps.pop(0)
-        print("remaining steps: " + str(len(DataStore.steps)), file = sys.stderr)
     else:
-        print("no steps")
+        print("No steps remaining.", file=sys.stderr)
 
     if len(DataStore.steps) == 0:
         DataStore.action = "end"
         DataStore.balanceEnd = True
-    else:
-        DataStore.action = "continue"
 
-    print(DataStore.action)
+        # Save the final state and generate the manifest
+        DataStore.ship.containers = copy.deepcopy(DataStore.tempContainerArray)
+        new_manifest_content = DataStore.ship.generate_manifest_content()
+        new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
+        new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
 
+        try:
+            with open(new_manifest_path, 'w') as f:
+                f.write(new_manifest_content)
+
+            print(f"Manifest successfully generated at {new_manifest_path}", file=sys.stderr)
+            session['new_manifest_filename'] = new_manifest_filename
+        except Exception as e:
+            print(f"Error saving manifest file: {e}", file=sys.stderr)
+            return render_template('Error.html', error=f"Failed to save manifest: {e}")
+
+        return redirect(url_for('success'))
+
+    DataStore.action = "continue"
     return render_template(
-            'Balance.html',
-            ship=DataStore.tempContainerArray,
-            current_operation=DataStore.current_operation,
-            total_operations=DataStore.total_operations,
-            action = str(DataStore.action),
-            cost = DataStore.balanceCost,
-            message = "Continuing algorithm"
-        )
+        'Balance.html',
+        ship=DataStore.tempContainerArray,
+        action=DataStore.action,
+        cost=DataStore.balanceCost,
+        message="Continuing algorithm"
+    )
 
 
 @app.route('/get_movements', methods=["GET"])
