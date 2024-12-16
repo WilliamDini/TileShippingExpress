@@ -14,10 +14,9 @@
     <div class="center">
         <div class="Msg">
             <p class="SuccMsg">
-                Return to Dashboard.
+                Your manifest file has been successfully generated and is ready for download.
             </p>
         </div>
-        
     </div>
 
     <div class="center">
@@ -26,6 +25,31 @@
             <button type="button" class="backButton">Continue</button>
         </div>
     </div>
-    
+
+    <!-- Auto-download script -->
+    <script>
+        // Automatically trigger the download of the manifest file
+        window.onload = function() {
+            const filename = "{{ url_for('download_manifest') }}";
+            const link = document.createElement('a');
+            link.href = filename;
+            link.download = filename.split('/').pop();
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+    </script>
+
+    <noscript>
+        <!-- Fallback for no JavaScript -->
+        <div class="center">
+            <div class="Msg">
+                <p class="SuccMsg">
+                    If your download does not start automatically, 
+                    <a href="{{ url_for('download_manifest') }}">click here to download the manifest</a>.
+                </p>
+            </div>
+        </div>
+    </noscript>
 </body>
 </html>
