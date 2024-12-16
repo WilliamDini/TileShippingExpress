@@ -454,11 +454,11 @@ def balance(r,grid):
     
     if not isinstance(grid, list):
         raise TypeError("grid should be a list")
-    gridcpy = grid.copy()
+    gridcpy = c.deepcopy(grid)
     
     if not isinstance(r, dict):
         raise TypeError("r should be a dictionary")
-    rcpy = r.copy()
+    rcpy = c.deepcopy(r)
     
     contcpy = {}
     containers = {}
