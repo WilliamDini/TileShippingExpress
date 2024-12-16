@@ -15,7 +15,7 @@ import copy
 
 app = Flask(__name__)
 app.secret_key = 'DrKeoghRocks'
-log_file = 'logfile.log'
+log_file = 'KeoghsPort2024'
 state_file = 'program_state.pkl'
 STATE_FILE = "test_state.pkl"
 class DataStore():
