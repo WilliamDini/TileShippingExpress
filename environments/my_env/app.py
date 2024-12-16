@@ -714,7 +714,9 @@ def Balance():
             
         log("Balance algorithm triggered.")
         print("Balance algorithm triggered", file=sys.stderr)
-
+        r, g = readFileInput(DataStore.fileName)
+        
+        # Perform the balance algorithm
         try:
             movements, cost = balance(r, g) #problem?
             movements.reverse()
@@ -769,7 +771,6 @@ def Balance():
                 action = "continue",
                 message="Balance algorithm completed successfully!"
             )
-
         except Exception as e:
             print(f"Error during balance computation: {e}", file=sys.stderr)
             print(f"Metadata: {r}", file=sys.stderr)
