@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, session, g
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session, g, send_file
 import sys
 from grid import *
 from Transfer import *
@@ -15,7 +15,7 @@ import copy
 
 app = Flask(__name__)
 app.secret_key = 'DrKeoghRocks'
-log_file = 'logfile.log'
+log_file = 'KeoghsPort2024.txt'
 state_file = 'program_state.pkl'
 STATE_FILE = "test_state.pkl"
 class DataStore():
@@ -305,6 +305,7 @@ def transfer_process_init():
         DataStore.ship.containers = copy.deepcopy(DataStore.tempContainerArray)
         new_manifest_content = DataStore.ship.generate_manifest_content()
         new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
+        log(f"Manifest file generated: {new_manifest_filename}")
         new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
         
         with open(new_manifest_path, 'w') as f:
@@ -316,6 +317,7 @@ def transfer_process_init():
         DataStore.ship.containers = copy.deepcopy(DataStore.tempContainerArray)
         new_manifest_content = DataStore.ship.generate_manifest_content()
         new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
+        log(f"Manifest file generated: {new_manifest_filename}")
         new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
         
         # Save the new manifest to a file
@@ -500,7 +502,22 @@ def transfer_process_on():
                 numContRemove = DataStore.num_containers_to_remove,
                 numLoad = DataStore.num_containers_to_load
             )
-
+        try:
+            restricted_names = {"NAN", "UNUSED"}
+            if container_name in restricted_names:
+                raise ValueError("Container name cannot be 'NAN' or 'UNUSED'.")
+        except ValueError as e:
+            return render_template(
+                'TransferProcess.html',
+                ship=DataStore.tempContainerArray,
+                current_operation=DataStore.current_operation,
+                total_operations=DataStore.total_operations,
+                action=DataStore.action,
+                error=str(e),
+                prevAction=DataStore.prevAction,
+                numContRemove=DataStore.num_containers_to_remove,
+                numLoad=DataStore.num_containers_to_load
+            )
         try:
             container_weight = float(container_weight)  
         except ValueError:
@@ -523,14 +540,17 @@ def transfer_process_on():
         elif container_weight > 99999:
             print(f"Weight ({container_weight}) exceeds 99999. Adjusting to 99999.", file=sys.stderr)
             container_weight = 99999 
+            print
         else:
             container_weight = round(container_weight) 
 
-        if len(str(container_weight)) < 5:
+        if len(str(container_weight)) <= 5:
             contString = copy.deepcopy(str(container_weight))
             for i in range(5 - len(str(container_weight))):
                 contString = "0" + contString
-
+        elif len(str(container_weight)) > 5:
+            print(f"Error with container weight: {e}", file=sys.stderr)
+            return render_template(Error.html, error=f"Error with container weight: {e}")
         print(len(DataStore.tempContainerArray))
         if len(DataStore.tempContainerArray) > 0:
             for i in range(len(DataStore.tempContainerArray)):
@@ -680,42 +700,47 @@ def Balance():
     if len(DataStore.steps) > 0:
         return balance_process_cont()
 
-    if len(DataStore.steps) == 0 and DataStore.balanceEnd == True:
+    if len(DataStore.steps) == 0 and DataStore.balanceEnd:
+        # Ensure the latest ship state is saved
+        DataStore.ship.containers = copy.deepcopy(DataStore.tempContainerArray)
+        new_manifest_content = DataStore.ship.generate_manifest_content()
+        new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
+        log(f"Manifest file generated: {new_manifest_filename}")
+        new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
+
+        try:
+            # Write the manifest file
+            with open(new_manifest_path, 'w') as f:
+                f.write(new_manifest_content)
+
+            print(f"Manifest successfully generated at {new_manifest_path}", file=sys.stderr)
+            session['new_manifest_filename'] = new_manifest_filename
+        except Exception as e:
+            print(f"Error saving manifest file: {e}", file=sys.stderr)
+            return render_template('Error.html', error=f"Failed to save manifest: {e}")
+
         return redirect(url_for('success'))
 
     if request.method == "POST":
-        if(request.args.get("moveTo") == "next") and len(DataStore.steps) > 0:
+        if request.args.get("moveTo") == "next" and len(DataStore.steps) > 0:
             print("continuing steps")
             return balance_process_cont()
-            
+
         log("Balance algorithm triggered.")
         print("Balance algorithm triggered", file=sys.stderr)
+        r, g = readFileInput(DataStore.fileName)
 
         try:
+
             r,g = readFileInput(DataStore.fileName)
             movements, cost = balance(r, g) #problem?
+    
             movements.reverse()
-            
             DataStore.balanceCost = cost
 
-            index = 0
-            moveInOrder = []
-            for element in movements:
-                temp = element.split()
-                if(temp[3] == "UNUSED"):
-                    moveInOrder.insert(index, element)
-                    index += 1
-                else:
-                    moveInOrder.insert(index, element)
-                    index = 0
+            # Reorder movements if needed
+            moveInOrder = sorted(movements, key=lambda x: x.split()[3] == "UNUSED", reverse=True)
 
-            print("correct order")
-            for element in moveInOrder:
-                print(element)
-
-            print("reversed order")
-            for element in movements:
-                print(element)
             if not movements:
                 return render_template(
                     'Balance.html',
@@ -723,36 +748,28 @@ def Balance():
                     message="Ship is already balanced!"
                 )
 
-            for element in movements:
-                print(type(element))
             if len(DataStore.steps) == 0:
                 DataStore.tempContainerArray = copy.deepcopy(DataStore.ship.containers)
                 DataStore.problem = Problem(DataStore.tempContainerArray)
                 DataStore.problem.loadNestedContainers()
                 DataStore.steps = DataStore.problem.returnPathArray(moveInOrder)
-                print("after steps")
-                print(len(DataStore.steps))
                 DataStore.tempContainerArray = copy.deepcopy(DataStore.steps[0])
-                print("pop step from init")
                 DataStore.steps.pop(0)
-            
+
             if len(DataStore.steps) == 0:
-                DataStore.action == "end"
+                DataStore.action = "end"
                 DataStore.balanceEnd = True
             else:
-                DataStore.action == "continue"
+                DataStore.action = "continue"
 
             return render_template(
                 'Balance.html',
                 ship=DataStore.tempContainerArray,
-                current_operation=DataStore.current_operation,
-                total_operations=DataStore.total_operations,
                 movements=movements,
                 cost=DataStore.balanceCost,
-                action = DataStore.action,
+                action=DataStore.action,
                 message="Balance algorithm completed successfully!"
             )
-
         except Exception as e:
             print(f"Error during balance computation: {e}", file=sys.stderr)
             print(f"Metadata: {r}", file=sys.stderr)
@@ -767,32 +784,44 @@ def Balance():
                            action = "start")
 
 def balance_process_cont():
-    print("in balance process cont")
+    print("In balance_process_cont", file=sys.stderr)
     if len(DataStore.steps) > 0:
         DataStore.tempContainerArray = copy.deepcopy(DataStore.steps[0])
-        print("pop step from balance cont")
         DataStore.steps.pop(0)
-        print("remaining steps: " + str(len(DataStore.steps)), file = sys.stderr)
     else:
-        print("no steps")
+        print("No steps remaining.", file=sys.stderr)
 
     if len(DataStore.steps) == 0:
         DataStore.action = "end"
         DataStore.balanceEnd = True
-    else:
-        DataStore.action = "continue"
 
-    print(DataStore.action)
+        # Save the final state and generate the manifest
+        DataStore.ship.containers = copy.deepcopy(DataStore.tempContainerArray)
+        new_manifest_content = DataStore.ship.generate_manifest_content()
+        new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
+        log(f"Manifest file generated: {new_manifest_filename}")
+        new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
 
+        try:
+            with open(new_manifest_path, 'w') as f:
+                f.write(new_manifest_content)
+
+            print(f"Manifest successfully generated at {new_manifest_path}", file=sys.stderr)
+            session['new_manifest_filename'] = new_manifest_filename
+        except Exception as e:
+            print(f"Error saving manifest file: {e}", file=sys.stderr)
+            return render_template('Error.html', error=f"Failed to save manifest: {e}")
+
+        return redirect(url_for('success'))
+
+    DataStore.action = "continue"
     return render_template(
-            'Balance.html',
-            ship=DataStore.tempContainerArray,
-            current_operation=DataStore.current_operation,
-            total_operations=DataStore.total_operations,
-            action = str(DataStore.action),
-            cost = DataStore.balanceCost,
-            message = "Continuing algorithm"
-        )
+        'Balance.html',
+        ship=DataStore.tempContainerArray,
+        action=DataStore.action,
+        cost=DataStore.balanceCost,
+        message="Continuing algorithm"
+    )
 
 
 @app.route('/get_movements', methods=["GET"])
@@ -851,6 +880,17 @@ def log_comment():
         return jsonify({"status": "success", "message": "Comment logged successfully"})
     return jsonify({"status": "error", "message": "No comment provided."}), 400
 
+@app.route('/download-manifest')
+def download_manifest():
+    new_manifest_filename = session.get('new_manifest_filename')
+    if not new_manifest_filename:
+        return "Manifest file not found.", 404
+
+    file_path = os.path.join(app.root_path, new_manifest_filename)
+    if os.path.exists(file_path):
+        return send_file(file_path, as_attachment=True)
+    else:
+        return "Manifest file not found on server.", 404
 
 
 @app.route('/Success', methods=["GET"])

@@ -48,6 +48,9 @@
     {% if action == "On" and prevAction != "On" and current_operation <= total_operations and numLoad > 0 %}
     <div class="form-container">
         <form action="{{ url_for('transfer_process_init', current=current_operation, moveTo='On') }}" method="post">
+            {% if error %}
+            <p class="error-message">{{ error }}</p>
+            {% endif %}
             <label for="container-name">Container Name:</label>
             <input type="text" id="container-name" name="container_name" required>
             <label for="container-weight">Container Weight:</label>
