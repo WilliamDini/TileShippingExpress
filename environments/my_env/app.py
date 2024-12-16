@@ -196,7 +196,6 @@ def loading():
         num_containers = request.form.get("num_containers")
         if not num_containers.isdigit() and not (num_containers.lstrip('-').isdigit()):
             return render_template('loading.html', error="Please enter a valid number.")
-
         num_containers = int(num_containers)
         if num_containers == 1:
             num_containers = 1
@@ -307,7 +306,8 @@ def transfer_process_init():
         DataStore.ship.containers = copy.deepcopy(DataStore.tempContainerArray)
         new_manifest_content = DataStore.ship.generate_manifest_content()
         new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
-        log(f"Manifest file generated: {new_manifest_filename}")
+        log("Transfer service completed in " + str(len(DataStore.masterPathArray)) + " minutes.")
+        log(f"Transfer service completed. Updated manifest saved to  {new_manifest_filename}")
         new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
         
         with open(new_manifest_path, 'w') as f:
@@ -319,7 +319,8 @@ def transfer_process_init():
         DataStore.ship.containers = copy.deepcopy(DataStore.tempContainerArray)
         new_manifest_content = DataStore.ship.generate_manifest_content()
         new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
-        log(f"Manifest file generated: {new_manifest_filename}")
+        log("Transfer service completed in " + str(len(DataStore.masterPathArray)) + " minutes.")
+        log(f"Transfer service completed. Updated manifest saved to  {new_manifest_filename}")
         new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
         
         # Save the new manifest to a file
@@ -714,7 +715,8 @@ def Balance():
         DataStore.ship.containers = copy.deepcopy(DataStore.tempContainerArray)
         new_manifest_content = DataStore.ship.generate_manifest_content()
         new_manifest_filename = f"{DataStore.fileName.split('.')[0]}OUTBOUND.txt"
-        log(f"Manifest file generated: {new_manifest_filename}")
+        log("Balance service completed in " + str(DataStore.balanceCost) + " minutes.")
+        log(f"Balance service completed. Updated manifest saved to  {new_manifest_filename}")
         new_manifest_path = os.path.join(app.root_path, new_manifest_filename)
 
         try:
